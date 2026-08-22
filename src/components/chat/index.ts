@@ -37,3 +37,7 @@ export {
   NewGroupDialog,
   type NewGroupDialogProps,
 } from './new-group-dialog'
+export {
+  AddMembersDialog,
+  type AddMembersDialogProps,
+} from './add-members-dialog'

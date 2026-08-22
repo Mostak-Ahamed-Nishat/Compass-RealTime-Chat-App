@@ -11,6 +11,8 @@ import {
   Image as ImageIcon,
   Link2,
   LogOut,
+  Mic,
+  Pencil,
   Pin,
   Search,
   Shield,
@@ -18,6 +20,7 @@ import {
   Type,
   User,
   UserMinus,
+  Video,
   X,
 } from 'lucide-react'
 import { IconButton, EmojiPickerComponent } from '@/components/ui'
@@ -47,6 +50,8 @@ export interface ChatDetailsPanelProps {
   removingParticipantId?: string | null
   onLeaveGroup?: () => void
   isLeavingGroup?: boolean
+  onRenameGroup?: (name: string) => void
+  onOpenAddMembers?: () => void
   className?: string
 }
 
@@ -217,6 +222,8 @@ const ChatDetailsPanel = ({
   removingParticipantId,
   onLeaveGroup,
   isLeavingGroup = false,
+  onRenameGroup,
+  onOpenAddMembers,
   className,
 }: ChatDetailsPanelProps) => {
   const shouldReduceMotion = useReducedMotion()
@@ -227,6 +234,10 @@ const ChatDetailsPanel = ({
   const [searchQuery, setSearchQuery] = React.useState('')
   const [customizeField, setCustomizeField] = React.useState<CustomizeField>(null)
   const [nicknameDraft, setNicknameDraft] = React.useState(nickname ?? '')
+  const [isEditingGroupName, setIsEditingGroupName] = React.useState(false)
+  const [groupNameDraft, setGroupNameDraft] = React.useState(
+    conversation.type === 'group' ? conversation.name : ''
+  )
 
   React.useEffect(() => {
     if (!isOpen) {
@@ -234,6 +245,7 @@ const ChatDetailsPanel = ({
       setIsSearching(false)
       setSearchQuery('')
       setCustomizeField(null)
+      setIsEditingGroupName(false)
     }
   }, [isOpen])
 
@@ -242,11 +254,20 @@ const ChatDetailsPanel = ({
     setIsSearching(false)
     setSearchQuery('')
     setCustomizeField(null)
+    setIsEditingGroupName(false)
+    setGroupNameDraft(conversation.type === 'group' ? conversation.name : '')
   }, [conversation._id])
 
   React.useEffect(() => {
     setNicknameDraft(nickname ?? '')
   }, [nickname])
+
+  React.useEffect(() => {
+    if (conversation.type === 'group' && !isEditingGroupName) {
+      setGroupNameDraft(conversation.name)
+    }
+    // isEditingGroupName intentionally excluded — only re-sync when the name itself changes.
+  }, [conversation.type === 'group' ? conversation.name : null])
 
   const displayName = nickname || getConversationName(conversation)
   const handle =
@@ -271,7 +292,25 @@ const ChatDetailsPanel = ({
     setCustomizeField(null)
   }
 
-  const headerTitle = view === 'root' ? 'Chat Details' : SUBVIEW_TITLES[view]
+  const commitGroupName = () => {
+    const trimmed = groupNameDraft.trim()
+    if (trimmed.length > 0 && conversation.type === 'group') {
+      onRenameGroup?.(trimmed)
+    } else if (conversation.type === 'group') {
+      setGroupNameDraft(conversation.name)
+    }
+    setIsEditingGroupName(false)
+  }
+
+  const isGroup = conversation.type === 'group'
+  const isCurrentUserAdmin = isGroup && conversation.admins.includes(currentUserId)
+
+  const headerTitle =
+    view === 'root'
+      ? isGroup
+        ? 'Group Info'
+        : 'Chat Details'
+      : SUBVIEW_TITLES[view]
 
   return (
     <AnimatePresence>
@@ -307,7 +346,169 @@ const ChatDetailsPanel = ({
           </div>
 
           <div className="flex flex-1 flex-col overflow-y-auto">
-            {view === 'root' && (
+            {view === 'root' && isGroup && conversation.type === 'group' && (
+              <>
+                <div className="flex flex-col items-center gap-1 px-4 pb-5 pt-6 text-center">
+                  <ConversationAvatar
+                    name={displayName}
+                    size="lg"
+                    className="h-20 w-20 text-xl"
+                  />
+                  {isEditingGroupName ? (
+                    <div className="mt-3 flex items-center gap-1.5">
+                      <input
+                        autoFocus
+                        type="text"
+                        value={groupNameDraft}
+                        onChange={(e) => setGroupNameDraft(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') commitGroupName()
+                          if (e.key === 'Escape') {
+                            setGroupNameDraft(conversation.name)
+                            setIsEditingGroupName(false)
+                          }
+                        }}
+                        onBlur={commitGroupName}
+                        className="h-8 rounded-full border border-gray-200 bg-gray-50 px-3 text-center text-sm text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                      />
+                    </div>
+                  ) : (
+                    <div className="mt-3 flex items-center gap-1.5">
+                      <p className="text-base font-semibold text-gray-900">
+                        {displayName}
+                      </p>
+                      {isCurrentUserAdmin && (
+                        <IconButton
+                          icon={<Pencil className="h-3.5 w-3.5" />}
+                          label="Edit group name"
+                          size="sm"
+                          onClick={() => setIsEditingGroupName(true)}
+                        />
+                      )}
+                    </div>
+                  )}
+                  <p className="text-sm text-secondary">
+                    {conversation.participants.length} members
+                  </p>
+                </div>
+
+                <div className="flex items-center justify-center gap-8 pb-5">
+                  <QuickAction icon={<Mic className="h-5 w-5" />} label="Voice" />
+                  <QuickAction icon={<Video className="h-5 w-5" />} label="Video" />
+                  <QuickAction
+                    icon={<Search className="h-5 w-5" />}
+                    label="Search"
+                    active={isSearching}
+                    onClick={() => setIsSearching((s) => !s)}
+                  />
+                </div>
+
+                {isSearching ? (
+                  <div className="flex flex-1 flex-col border-t border-gray-100">
+                    <div className="px-4 py-3">
+                      <div className="relative">
+                        <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                        <input
+                          autoFocus
+                          type="search"
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          placeholder="Search in this chat"
+                          className="h-10 w-full rounded-full border border-gray-200 bg-gray-50 pl-10 pr-4 text-sm text-gray-900 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex-1 overflow-y-auto px-2 pb-4">
+                      {!searchQuery.trim() ? (
+                        <p className="px-2 py-6 text-center text-sm text-secondary">
+                          Type to search messages in this chat
+                        </p>
+                      ) : searchResults.length === 0 ? (
+                        <p className="px-2 py-6 text-center text-sm text-secondary">
+                          No messages found
+                        </p>
+                      ) : (
+                        searchResults.map((m) => (
+                          <div
+                            key={m._id}
+                            className="rounded-xl px-2 py-2.5 hover:bg-gray-50"
+                          >
+                            <p className="line-clamp-2 text-sm text-gray-900">
+                              {m.text}
+                            </p>
+                            <p className="mt-0.5 text-xs text-secondary">
+                              {formatRelativeTime(m.createdAt)}
+                            </p>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="border-t border-gray-100 px-4 py-4">
+                    <div className="flex items-center justify-between pb-2">
+                      <span className="text-sm font-semibold text-gray-900">
+                        Members ({conversation.participants.length})
+                      </span>
+                      {isCurrentUserAdmin && (
+                        <button
+                          type="button"
+                          onClick={onOpenAddMembers}
+                          className="text-sm font-medium text-primary hover:underline"
+                        >
+                          + Add
+                        </button>
+                      )}
+                    </div>
+                    <div className="space-y-1">
+                      {conversation.participants.map((p) => {
+                        const isSelf = p._id === currentUserId
+                        const isRemoving = removingParticipantId === p._id
+                        return (
+                          <div
+                            key={p._id}
+                            className="flex items-center gap-3 rounded-xl px-1 py-2"
+                          >
+                            <ConversationAvatar name={p.name} size="sm" />
+                            <span className="flex-1 truncate text-sm text-gray-900">
+                              {isSelf ? `${p.name} (You)` : p.name}
+                            </span>
+                            {conversation.admins.includes(p._id) && (
+                              <span className="flex items-center gap-1 text-xs font-medium text-primary">
+                                <Shield className="h-3.5 w-3.5" />
+                                Admin
+                              </span>
+                            )}
+                            {isCurrentUserAdmin && !isSelf && (
+                              <IconButton
+                                icon={<UserMinus className="h-4 w-4" />}
+                                label={`Remove ${p.name}`}
+                                size="sm"
+                                disabled={isRemoving}
+                                onClick={() => onRemoveParticipant?.(p._id)}
+                                className="text-red-500 hover:bg-red-50"
+                              />
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={onLeaveGroup}
+                      disabled={isLeavingGroup}
+                      className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 py-2.5 text-sm font-medium text-red-500 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      {isLeavingGroup ? 'Leaving…' : 'Leave group'}
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
+
+            {view === 'root' && !isGroup && (
               <>
                 <div className="flex flex-col items-center gap-1 px-4 pb-5 pt-6 text-center">
                   <ConversationAvatar
@@ -547,7 +748,7 @@ const ChatDetailsPanel = ({
               </>
             )}
 
-            {view === 'profile' && (
+            {view === 'profile' && conversation.type === 'direct' && (
               <div className="flex flex-1 flex-col">
                 <div className="flex flex-col items-center gap-1 px-4 pb-6 pt-8 text-center">
                   <ConversationAvatar
@@ -561,69 +762,16 @@ const ChatDetailsPanel = ({
                   <p className="text-sm text-secondary">{handle}</p>
                 </div>
 
-                {conversation.type === 'direct' ? (
-                  <div className="space-y-3 border-t border-gray-100 px-4 py-4">
-                    <div>
-                      <p className="text-xs font-medium uppercase tracking-wide text-secondary">
-                        Phone
-                      </p>
-                      <p className="mt-0.5 text-sm text-gray-900">
-                        {conversation.participant.phone}
-                      </p>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="border-t border-gray-100 px-4 py-4">
+                <div className="space-y-3 border-t border-gray-100 px-4 py-4">
+                  <div>
                     <p className="text-xs font-medium uppercase tracking-wide text-secondary">
-                      {conversation.participants.length} members
+                      Phone
                     </p>
-                    <div className="mt-2 space-y-1">
-                      {conversation.participants.map((p) => {
-                        const isSelf = p._id === currentUserId
-                        const isCurrentUserAdmin =
-                          conversation.admins.includes(currentUserId)
-                        const isRemoving = removingParticipantId === p._id
-                        return (
-                          <div
-                            key={p._id}
-                            className="flex items-center gap-3 rounded-xl px-1 py-2"
-                          >
-                            <ConversationAvatar name={p.name} size="sm" />
-                            <span className="flex-1 truncate text-sm text-gray-900">
-                              {isSelf ? `${p.name} (You)` : p.name}
-                            </span>
-                            {conversation.admins.includes(p._id) && (
-                              <span className="flex items-center gap-1 text-xs font-medium text-primary">
-                                <Shield className="h-3.5 w-3.5" />
-                                Admin
-                              </span>
-                            )}
-                            {isCurrentUserAdmin && !isSelf && (
-                              <IconButton
-                                icon={<UserMinus className="h-4 w-4" />}
-                                label={`Remove ${p.name}`}
-                                size="sm"
-                                disabled={isRemoving}
-                                onClick={() => onRemoveParticipant?.(p._id)}
-                                className="text-red-500 hover:bg-red-50"
-                              />
-                            )}
-                          </div>
-                        )
-                      })}
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={onLeaveGroup}
-                      disabled={isLeavingGroup}
-                      className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 py-2.5 text-sm font-medium text-red-500 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      <LogOut className="h-4 w-4" />
-                      {isLeavingGroup ? 'Leaving…' : 'Leave group'}
-                    </button>
+                    <p className="mt-0.5 text-sm text-gray-900">
+                      {conversation.participant.phone}
+                    </p>
                   </div>
-                )}
+                </div>
               </div>
             )}
 

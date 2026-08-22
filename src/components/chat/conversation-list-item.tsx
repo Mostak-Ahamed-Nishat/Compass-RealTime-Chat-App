@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { motion } from 'framer-motion'
 import { BellOff } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
@@ -37,7 +38,9 @@ const ConversationListItem = ({
   )
 
   return (
-    <button
+    <motion.button
+      layout
+      transition={{ duration: 0.25, ease: 'easeOut' }}
       type="button"
       onClick={onClick}
       className={cn(
@@ -68,7 +71,7 @@ const ConversationListItem = ({
           </div>
         </div>
       </div>
-    </button>
+    </motion.button>
   )
 }
 

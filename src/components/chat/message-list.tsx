@@ -33,10 +33,33 @@ const MessageList = ({
   className,
 }: MessageListProps) => {
   const bottomRef = React.useRef<HTMLDivElement>(null)
+  const containerRef = React.useRef<HTMLDivElement>(null)
+  const isNearBottomRef = React.useRef(true)
+  const lastMessage = messages[messages.length - 1]
 
+  const handleScroll = () => {
+    const el = containerRef.current
+    if (!el) return
+    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight
+    isNearBottomRef.current = distanceFromBottom < 120
+  }
+
+  // Auto-scroll to the latest message, but never yank the view down while
+  // the user has scrolled up to read history — unless the new message is
+  // their own send, which should always come into view.
   React.useEffect(() => {
+    const isOwnMessage = lastMessage?.sender === currentUserId
+    if (isNearBottomRef.current || isOwnMessage) {
+      bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
+      isNearBottomRef.current = true
+    }
+  }, [messages.length, isOtherTyping, lastMessage?.sender, currentUserId])
+
+  // Conversations always open scrolled to the bottom.
+  React.useEffect(() => {
+    isNearBottomRef.current = true
     bottomRef.current?.scrollIntoView({ block: 'end' })
-  }, [messages.length, isOtherTyping])
+  }, [conversation._id])
 
   if (isLoading) {
     return (
@@ -74,7 +97,11 @@ const MessageList = ({
     (conversation.type === 'direct' ? conversation.participant.name : 'Someone')
 
   return (
-    <div className={cn('flex-1 overflow-y-auto bg-gray-50 py-2', className)}>
+    <div
+      ref={containerRef}
+      onScroll={handleScroll}
+      className={cn('flex-1 overflow-y-auto bg-gray-50 py-2', className)}
+    >
       {groups.map((group) => (
         <div key={group.label}>
           <DateDivider label={group.label} />

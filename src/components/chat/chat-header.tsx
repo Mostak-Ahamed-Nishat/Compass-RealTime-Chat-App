@@ -28,12 +28,14 @@ const ChatHeader = ({
     <header className="flex h-[73px] shrink-0 items-center justify-between border-b border-gray-200 bg-white px-4 md:px-6">
       <div className="flex min-w-0 items-center gap-2 md:gap-3">
         {onBack && (
-          <IconButton
-            icon={<ArrowLeft className="h-5 w-5" />}
-            label="Back to chats"
+          <button
+            type="button"
+            aria-label="Back to chats"
             onClick={onBack}
-            className="md:hidden"
-          />
+            className="relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-secondary transition-colors hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer md:hidden"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </button>
         )}
         <ConversationAvatar name={name} />
         <div className="min-w-0">

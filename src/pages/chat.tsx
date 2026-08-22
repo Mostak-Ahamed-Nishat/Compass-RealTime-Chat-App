@@ -12,6 +12,7 @@ import {
   MobileTabBar,
   NewChatDialog,
   NewGroupDialog,
+  AddMembersDialog,
 } from '@/components/chat'
 import { auth as tokenStore } from '@/lib/auth'
 import {
@@ -49,6 +50,8 @@ export default function ChatPage() {
     string | null
   >(null)
   const [isLeavingGroup, setIsLeavingGroup] = useState(false)
+  const [isAddMembersOpen, setIsAddMembersOpen] = useState(false)
+  const [isAddingMembers, setIsAddingMembers] = useState(false)
   const [messagesByConversation, setMessagesByConversation] = useState<
     Record<string, Message[]>
   >({})
@@ -187,6 +190,11 @@ export default function ChatPage() {
         const existing = prev[message.conversation] ?? []
         if (existing.some((m) => m._id === message._id)) return prev
         return { ...prev, [message.conversation]: [...existing, message] }
+      })
+      bumpConversationPreview(message.conversation, {
+        text: message.text,
+        sender: message.sender,
+        createdAt: message.createdAt,
       })
       setTypingConversationId((current) =>
         current === message.conversation ? null : current
@@ -341,6 +349,41 @@ export default function ChatPage() {
     }
   }
 
+  const handleAddParticipants = async (
+    conversationId: string,
+    userIds: string[]
+  ) => {
+    setIsAddingMembers(true)
+    try {
+      const updated = (await conversationsApi.addParticipants(
+        conversationId,
+        userIds
+      )) as Conversation
+      setConversations((prev) =>
+        prev.map((c) => (c._id === conversationId ? updated : c))
+      )
+      setIsAddMembersOpen(false)
+    } catch (err: any) {
+      setConversationsError(err?.error?.message || 'Failed to add members')
+    } finally {
+      setIsAddingMembers(false)
+    }
+  }
+
+  const handleRenameGroup = async (conversationId: string, name: string) => {
+    try {
+      const updated = (await conversationsApi.rename(
+        conversationId,
+        name
+      )) as Conversation
+      setConversations((prev) =>
+        prev.map((c) => (c._id === conversationId ? updated : c))
+      )
+    } catch (err: any) {
+      setConversationsError(err?.error?.message || 'Failed to rename group')
+    }
+  }
+
   // This side only EMITS typing — it never sets local state from its own
   // keystrokes. The indicator only ever renders from a `typing` event this
   // client RECEIVES from someone else's socket (see the listener above).
@@ -381,6 +424,24 @@ export default function ChatPage() {
       const next = { ...prev }
       if (emoji) next[conversationId] = emoji
       else delete next[conversationId]
+      return next
+    })
+  }
+
+  // Moves a conversation to the top of the list with an updated preview —
+  // mirrors WhatsApp-style "most recently active chat floats up" behavior.
+  // The reorder itself animates via ConversationListItem's `layout` prop.
+  const bumpConversationPreview = (
+    conversationId: string,
+    lastMessage: { text: string; sender: string; createdAt: string }
+  ) => {
+    setConversations((prev) => {
+      const index = prev.findIndex((c) => c._id === conversationId)
+      if (index === -1) return prev
+      const updated = { ...prev[index], lastMessage, updatedAt: lastMessage.createdAt }
+      const next = prev.slice()
+      next.splice(index, 1)
+      next.unshift(updated)
       return next
     })
   }
@@ -432,21 +493,11 @@ export default function ChatPage() {
         ...response,
         status: undefined,
       }))
-      setConversations((prev) =>
-        prev.map((c) =>
-          c._id === conversationId
-            ? {
-                ...c,
-                lastMessage: {
-                  text: response.text,
-                  sender: response.sender,
-                  createdAt: response.createdAt,
-                },
-                updatedAt: response.createdAt,
-              }
-            : c
-        )
-      )
+      bumpConversationPreview(conversationId, {
+        text: response.text,
+        sender: response.sender,
+        createdAt: response.createdAt,
+      })
     } catch {
       setMessageInConversation(conversationId, tempId, (m) => ({
         ...m,
@@ -607,6 +658,10 @@ export default function ChatPage() {
           removingParticipantId={removingParticipantId}
           onLeaveGroup={() => handleLeaveGroup(selectedConversation._id)}
           isLeavingGroup={isLeavingGroup}
+          onRenameGroup={(name) =>
+            handleRenameGroup(selectedConversation._id, name)
+          }
+          onOpenAddMembers={() => setIsAddMembersOpen(true)}
         />
       )}
 
@@ -625,6 +680,18 @@ export default function ChatPage() {
         onCreateGroup={handleCreateGroup}
         isCreating={isCreatingGroup}
       />
+
+      {selectedConversation?.type === 'group' && (
+        <AddMembersDialog
+          open={isAddMembersOpen}
+          onOpenChange={setIsAddMembersOpen}
+          conversation={selectedConversation}
+          onAddMembers={(userIds) =>
+            handleAddParticipants(selectedConversation._id, userIds)
+          }
+          isAdding={isAddingMembers}
+        />
+      )}
     </div>
   )
 }

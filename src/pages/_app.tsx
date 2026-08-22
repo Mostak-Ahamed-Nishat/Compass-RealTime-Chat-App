@@ -1,6 +1,20 @@
 import React, { createContext, useState, useEffect } from 'react'
 import type { AppProps } from 'next/app'
+import { Inter, Sora } from 'next/font/google'
 import '@/styles/globals.css'
+
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter',
+  display: 'swap',
+})
+
+const sora = Sora({
+  subsets: ['latin'],
+  weight: ['600', '700', '800'],
+  variable: '--font-sora',
+  display: 'swap',
+})
 
 export const AuthContext = createContext<any>(null)
 
@@ -43,7 +57,9 @@ export default function App({ Component, pageProps }: AppProps) {
 
   return (
     <AuthContext.Provider value={{ currentUser, setCurrentUser, isLoading }}>
-      <Component {...pageProps} />
+      <div className={`${inter.variable} ${sora.variable} contents font-sans`}>
+        <Component {...pageProps} />
+      </div>
     </AuthContext.Provider>
   )
 }
