@@ -1,221 +1,146 @@
 # Compass Chat
 
-A real-time chat application built with React/Next.js. Connect with people one-to-one or in groups with instant messaging, seamless navigation, and an intuitive interface.
+A real-time messaging app built for a frontend take-home assignment — direct and group conversations, live delivery over Socket.io, and a landing page that showcases the chat panel with a working, embedded copy of it rather than a screenshot.
+
+**Repo:** [github.com/Mostak-Ahamed-Nishat/Compass-RealTime-Chat-App](https://github.com/Mostak-Ahamed-Nishat/Compass-RealTime-Chat-App)
 
 ## Live Demo
 
-- **Chat Application:** [Coming Soon]
-- **Landing Page:** [Coming Soon]
+| | URL |
+|---|---|
+| App (Part 1) | _pending deployment_ |
+| Landing page (Part 2) | _pending deployment_ |
+
+> Both parts live in the same Next.js app (`/` is the landing page, `/chat` is the product) and ship from a single deployment. This table will be filled in once that deploy is live.
+
+## Contents
+
+- [Overview](#overview)
+- [Tech stack](#tech-stack)
+- [Getting started](#getting-started)
+- [Project structure](#project-structure)
+- [Feature status](#feature-status)
+- [API documentation](#api-documentation)
+- [Part 3 — thought process write-up](#part-3--thought-process-write-up)
+- [Known limitations](#known-limitations)
 
 ## Overview
 
-Compass Chat is a take-home assignment project featuring:
-- Real-time messaging (direct & group conversations)
-- User search and discovery
-- Group management (create, add/remove members, admin controls)
-- Clean, responsive UI
-- Secure authentication via phone number
+Compass Chat lets a user sign in with just a phone number and name (the API auto-registers new numbers — no password), search for people, start direct or group conversations, and message in real time. The chat panel — message list, sending, and live updates — was the part of the assignment called out for the closest review, so it got the most iteration: optimistic sends with retry-on-failure, a scroll position that only auto-follows the conversation when the user hasn't scrolled up to read history, live typing indicators, and Socket.io-driven delivery.
 
-## Tech Stack
+The landing page (`/`) is a separate, from-scratch design pass built to showcase that chat panel — including a live, interactive instance of the real `MessageBubble`/`TypingIndicator` components, not a static screenshot.
 
-- **Frontend:** React 18 + Next.js 14
-- **Styling:** Tailwind CSS
-- **HTTP Client:** Fetch API
-- **State Management:** React Context API
-- **Real-time:** Socket.io WebSocket
-- **Deployment:** Vercel
+## Tech stack
 
-## Prerequisites
+| Layer | Choice | Why |
+|---|---|---|
+| Framework | Next.js 14 (Pages Router) + React 18 + TypeScript | SSR-capable, file-based routing, mature ecosystem, fast to scaffold under a 24-hour budget |
+| Styling | Tailwind CSS + a custom design-token layer (`tailwind.config.ts`) | Deliberate deep-purple/amber palette and `rounded-xl` scale instead of default Tailwind slate/blue, so the UI doesn't read as generic |
+| UI primitives | shadcn-style components over Radix (`dialog`, `dropdown-menu`, `avatar`, `scroll-area`, `separator`) | Accessible, keyboard-correct primitives out of the box, styled to the custom tokens |
+| Forms | react-hook-form | Login and dialog forms need validation without hand-rolled state plumbing |
+| In-app motion | Framer Motion | Message bubbles entering, list reordering, dialog/panel transitions — declarative and plays well with mount/unmount |
+| Landing-page motion | GSAP + ScrollTrigger + Lenis | Scroll-driven reveals and a smoothed scroll feed on the landing page only, kept separate from Framer Motion to avoid two libraries fighting over the same transforms |
+| Real-time | socket.io-client, with the REST message-history endpoint as the source of truth | Confirmed working against the live API; polling was the planned fallback if the socket handshake failed (see [Architecture & trade-offs](docs/DEVELOPMENT.md#architecture--trade-offs)) |
+| State | React Context (auth + a page-level reducer-ish set of hooks in `chat.tsx`) | The state surface is one auth object and one conversation/message tree — a global store would add ceremony without solving a real problem here |
+| Fonts | next/font (Inter for body, Sora for display headlines) | The pairing the design direction called for was scoped but never actually wired up — this closes that gap |
 
-- Node.js 18+ 
-- npm or yarn
-- Modern browser with ES6+ support
+Full rationale and trade-offs (including what was considered and rejected) are in [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
 
-## Project Structure
-
-```
-compass-chat/
-├── src/
-│   ├── pages/              # Next.js pages
-│   ├── components/         # React components
-│   ├── hooks/              # Custom hooks
-│   ├── lib/
-│   │   ├── api.ts          # API client
-│   │   └── auth.ts         # Auth utilities
-│   ├── types/              # TypeScript types
-│   └── styles/             # CSS modules
-├── public/                 # Static assets
-├── docs/
-│   ├── API.md              # API reference
-│   └── DEVELOPMENT.md      # Development notes & thought process
-├── README.md               # This file
-├── CLAUDE.md               # Internal reference
-└── package.json
-```
-
-## Getting Started
-
-### Installation
+## Getting started
 
 ```bash
-# Clone the repository
-git clone https://github.com/[username]/compass-chat.git
-cd compass-chat
-
-# Install dependencies
+git clone https://github.com/Mostak-Ahamed-Nishat/Compass-RealTime-Chat-App.git
+cd Compass-RealTime-Chat-App
 npm install
 ```
 
-### Development
+Create `.env.local` (or copy `.env.development`):
 
-```bash
-# Start development server
-npm run dev
-
-# Open http://localhost:3000 in your browser
-```
-
-### Build
-
-```bash
-# Create production build
-npm run build
-
-# Start production server
-npm run start
-```
-
-## Features
-
-### Authentication
-- ✅ Login/Register with phone number
-- ✅ Session persistence
-- ✅ Secure token-based auth
-
-### Conversations
-- ✅ Direct messaging (1-on-1)
-- ✅ Group conversations (3+)
-- ✅ Full message history
-- ✅ Real-time message updates
-
-### User Discovery
-- ✅ Search users by name or phone
-- ✅ User profiles
-- ✅ Quick user selection
-
-### Group Management
-- ✅ Create groups
-- ✅ Add/remove members
-- ✅ Promote admins
-- ✅ Rename groups
-- ✅ Leave groups
-
-### User Experience
-- ✅ Loading states
-- ✅ Empty states
-- ✅ Error handling
-- ✅ Auto-scroll to latest message
-- ✅ Smart scroll behavior (respects user scroll position)
-- ✅ Responsive design (mobile-first)
-
-## API Documentation
-
-See [docs/API.md](docs/API.md) for complete API reference.
-
-**Base URL:** `https://frontend-task-chatapp.onrender.com/api`
-
-Key endpoints:
-- `POST /auth/login` — Login/register
-- `GET /auth/me` — Current user
-- `GET /users/search` — Search users
-- `GET /conversations` — List conversations
-- `POST /conversations` — Start direct chat
-- `POST /conversations/group` — Create group
-- `POST /messages` — Send message
-
-## Development Notes
-
-See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for:
-- Architecture decisions
-- Design choices
-- AI tool usage
-- Known issues
-- Future improvements
-
-## Key Features Implementation
-
-### Real-time Updates
-Messages are fetched via polling at 1-2 second intervals. A WebSocket implementation can replace this for better scalability.
-
-### Auto-scroll Behavior
-- Automatically scrolls to the latest message
-- Does NOT force-scroll if user has scrolled up to read history
-- Smart detection of user intent
-
-### Empty & Error States
-- Empty conversation list
-- No messages in conversation
-- Network errors
-- Invalid operations
-
-## Deployment
-
-### Deploy to Vercel
-
-```bash
-# Install Vercel CLI
-npm i -g vercel
-
-# Deploy
-vercel
-
-# Follow prompts to configure
-```
-
-### Environment Variables
-
-Create `.env.local`:
 ```
 NEXT_PUBLIC_API_URL=https://frontend-task-chatapp.onrender.com/api
+NEXT_PUBLIC_SOCKET_URL=https://frontend-task-chatapp.onrender.com
 ```
-
-## Testing
-
-Currently no automated tests. TODO: Add Jest + React Testing Library
 
 ```bash
-npm run test
+npm run dev          # http://localhost:3000
+npm run type-check   # tsc --noEmit
+npm run build && npm run start   # production build
 ```
 
-## Contributing
+There's no seed data to set up — the API auto-registers whatever phone number you log in with. To try direct/group messaging locally, log in as two different phone numbers in two browser profiles (or one normal + one incognito window).
 
-This is a take-home assignment. Not accepting contributions at this time.
+## Project structure
 
-## License
+```
+src/
+├── pages/
+│   ├── index.tsx        # landing page (Part 2)
+│   ├── login.tsx        # phone + name sign-in (Part 1)
+│   ├── chat.tsx          # the chat dashboard — conversations, messages, real-time (Part 1)
+│   └── _app.tsx          # AuthContext + session restore, font loading
+├── components/
+│   ├── chat/              # Sidebar, ChatHeader, MessageList, MessageBubble, Composer,
+│   │                       # ChatDetailsPanel, New Chat/Group/Add-members dialogs, ...
+│   ├── auth/               # LoginHero, LoginForm, CommunityAvatars, FeatureCard
+│   ├── landing/            # SiteHeader, HeroSection, LiveChatPreview, FeaturesSection,
+│   │                        # HowItWorksSection, SocialProofSection, FinalCtaSection
+│   └── ui/                  # Button, Input, Avatar, Dialog, DropdownMenu, ConfirmDialog, ...
+├── lib/                     # api.ts (one function per endpoint), auth.ts (token storage),
+│                            # socket.ts, message.ts (formatting/grouping), utils.ts
+├── types/                   # User, Message, ConversationDirect/ConversationGroup
+└── styles/globals.css
+docs/
+├── API.md                   # API reference, verified against the live server
+└── DEVELOPMENT.md           # Part 3 write-up — architecture, design reasoning, AI usage, trade-offs
+```
 
-MIT License - See LICENSE file for details
+## Feature status
 
-## Known Issues
+### Part 1 — chat application
 
-See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for known issues and workarounds.
+| Feature | Status |
+|---|---|
+| Login (phone + name, auto-register) | ✅ |
+| Session restore on refresh (`GET /auth/me`) | ✅ |
+| User search (name/phone, min 2 characters) | ✅ |
+| Start a direct conversation | ✅ |
+| Create a group conversation | ✅ |
+| Add / remove group members, promote admin (API client), rename group | Add/remove/rename wired into the UI; promote-to-admin exists in `lib/api.ts` but isn't exposed in a menu yet |
+| Message list, sender/receiver visually distinguished, timestamps | ✅ |
+| Send messages, empty/whitespace-only blocked client-side | ✅ |
+| Optimistic send with sending → sent → failed (tap-to-retry planned as the bonus) | ✅ — see [Known limitations](#known-limitations) for the retry-tap gap |
+| Real-time delivery (Socket.io: `message:new`, `conversation:updated`) | ✅ |
+| Typing indicator | ✅ (best-effort — see [docs/API.md](docs/API.md), `typing` isn't a documented event) |
+| Auto-scroll that respects manual scroll-up | ✅ |
+| Loading / empty / error states | ✅ |
+| Older-message pagination (`before` cursor) | Not wired up — the API supports it, the UI currently only loads the latest page |
+| Responsive (mobile stack nav / desktop 3-pane) | ✅ |
 
-## What's Next
+### Part 2 — landing page
 
-See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md#future-improvements) for planned enhancements:
-- [ ] Message search
-- [ ] Message reactions
-- [ ] Typing indicators
-- [ ] Message read receipts
-- [ ] User presence (online/offline status)
-- [ ] File sharing
+| Feature | Status |
+|---|---|
+| Original layout, color story, and type pairing | ✅ |
+| Responsive, mobile-first | ✅ |
+| Showcases the real Part 1 feature (not a generic template) | ✅ — see the "bonus" row below |
+| GSAP/ScrollTrigger + Framer Motion animation pass, `prefers-reduced-motion` fallback | ✅ |
+| Bonus: live, interactive embed of the real chat components (not a screenshot) | ✅ |
 
-## Support
+## API documentation
 
-For questions about this assignment, refer to [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
+The full reference — every endpoint, request/response shape, pagination, error format, and every quirk found while testing against the live server — is in **[docs/API.md](docs/API.md)**. It was written before any UI code, as its own deliverable, per the assignment's instructions.
 
----
+## Part 3 — thought process write-up
 
-**Assignment Deadline:** August 22, 2026 4:00 PM  
-**Part 1 Focus:** Chat panel (message list, sending, real-time)  
-**Part 2 Focus:** Creative landing page  
-**Part 3:** Thought process documentation
+The full write-up — approach, architecture and library trade-offs, Part 2 design reasoning, how AI tools were used and what was changed or rejected, what's next with more time, and API issues encountered — lives in **[docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)**.
+
+## Known limitations
+
+Documented here rather than glossed over, in the spirit of the assignment's "clear, honest reasoning" note:
+
+- **No older-message pagination in the UI.** The API's `before`/`hasMore` cursor is documented and the client is ready to use it, but the message list only ever loads the latest page. Long-running conversations won't load history past that.
+- **Promote-to-admin isn't in a menu yet.** `lib/api.ts` has the client call; it isn't wired into `ChatDetailsPanel`.
+- **Tap-to-retry on a failed send isn't wired up.** A failed optimistic message renders in a visibly failed state (see `MessageBubble`), but there's no retry action yet — the intended bonus for Part 1.
+- **Presence ("Online now" / last-seen) is simulated client-side**, not sourced from the API — the live API doesn't expose a presence event, so it's mocked for visual completeness rather than claimed as real.
+- **No automated test suite committed.** The app was verified by hand and with ad hoc Playwright scripts driven against a running dev server during development (see [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)), but no `__tests__`/`e2e` directory is part of this submission.
+- **Not yet deployed.** Both live-demo links above are placeholders pending a Vercel deploy.

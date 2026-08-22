@@ -283,37 +283,37 @@ Not needed for this project: `dataviz` (no charts), `keybindings-help`/`update-c
 
 ## Part 1 Checklist
 - [x] API documentation written and verified against the live API ([docs/API.md](docs/API.md))
-- [ ] Login page (phone + name)
-- [ ] User search
-- [ ] Start direct conversation
-- [ ] Create group conversation
-- [ ] Message list with timestamps
-- [ ] Send messages (empty check)
-- [ ] Real-time message updates
-- [ ] Loading/empty/error states
-- [ ] Auto-scroll behavior
-- [ ] One deliberate bonus touch (see Bonus Ideas)
+- [x] Login page (phone + name)
+- [x] User search
+- [x] Start direct conversation
+- [x] Create group conversation
+- [x] Message list with timestamps
+- [x] Send messages (empty check)
+- [x] Real-time message updates
+- [x] Loading/empty/error states
+- [x] Auto-scroll behavior
+- [x] One deliberate bonus touch (optimistic send with sending/failed states — tap-to-retry still open, see [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md#what-id-improve-with-more-time))
 - [ ] Deploy to live URL
 
 ---
 
 ## Part 2 Checklist
-- [ ] Design landing page (consider sketching with the `design` skill first)
-- [ ] Responsive layout
-- [ ] Deliberate typography & color palette (not default Tailwind theme)
-- [ ] Showcase the actual Part 1 feature, not generic marketing sections
-- [ ] GSAP/Framer Motion animation pass
-- [ ] One deliberate bonus touch (see Bonus Ideas)
+- [x] Design landing page (consider sketching with the `design` skill first)
+- [x] Responsive layout
+- [x] Deliberate typography & color palette (not default Tailwind theme)
+- [x] Showcase the actual Part 1 feature, not generic marketing sections
+- [x] GSAP/Framer Motion animation pass
+- [x] One deliberate bonus touch — live, interactive embed of the real chat components in the hero (see [Bonus Ideas](#bonus-ideas-to-consider))
 - [ ] Deploy to live URL
 
 ---
 
 ## Part 3 Checklist
-- [ ] Architecture/library choices explained, with trade-offs
-- [ ] Design reasoning for Part 2
-- [ ] AI tool usage documented — what was used for, what was changed/rejected
-- [ ] Improvements noted
-- [ ] API issues/quirks section (docs/API.md's Notes sections are the raw material for this)
+- [x] Architecture/library choices explained, with trade-offs ([docs/DEVELOPMENT.md](docs/DEVELOPMENT.md#architecture--trade-offs))
+- [x] Design reasoning for Part 2 ([docs/DEVELOPMENT.md](docs/DEVELOPMENT.md#design-reasoning-part-2))
+- [x] AI tool usage documented — what was used for, what was changed/rejected ([docs/DEVELOPMENT.md](docs/DEVELOPMENT.md#ai-tool-usage))
+- [x] Improvements noted ([docs/DEVELOPMENT.md](docs/DEVELOPMENT.md#what-id-improve-with-more-time))
+- [x] API issues/quirks section ([docs/DEVELOPMENT.md](docs/DEVELOPMENT.md#api-issues-encountered))
 
 ---
 
