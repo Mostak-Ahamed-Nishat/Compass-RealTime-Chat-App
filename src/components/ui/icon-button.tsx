@@ -21,7 +21,7 @@ const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>(
       type="button"
       aria-label={label}
       className={cn(
-        'flex shrink-0 items-center justify-center rounded-full text-secondary transition-colors hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:pointer-events-none disabled:opacity-50',
+        'flex shrink-0 items-center justify-center rounded-full text-secondary transition-colors hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer',
         sizeClasses[size],
         className
       )}

@@ -1,6 +1,6 @@
 import * as React from 'react'
-import { Image as ImageIcon, Mic, Send, Smile } from 'lucide-react'
-import { IconButton } from '@/components/ui'
+import { Image as ImageIcon, Mic, Send } from 'lucide-react'
+import { IconButton, EmojiPickerComponent } from '@/components/ui'
 import { cn } from '@/lib/utils'
 
 export interface ComposerProps {
@@ -28,6 +28,10 @@ const Composer = ({ onSend, disabled = false, className }: ComposerProps) => {
     if (!canSend) return
     onSend(value.trim())
     setValue('')
+  }
+
+  const handleEmojiSelect = (emoji: string) => {
+    setValue((prev) => prev + emoji)
   }
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -66,11 +70,10 @@ const Composer = ({ onSend, disabled = false, className }: ComposerProps) => {
           disabled={disabled}
           className="max-h-[120px] flex-1 resize-none bg-transparent py-1.5 text-sm text-gray-900 placeholder:text-gray-400 focus-visible:outline-none disabled:cursor-not-allowed"
         />
-        <IconButton
-          icon={<Smile className="h-5 w-5" />}
-          label="Emoji"
+        <EmojiPickerComponent
+          onEmojiSelect={handleEmojiSelect}
           size="sm"
-          disabled
+          disabled={disabled}
         />
       </div>
 

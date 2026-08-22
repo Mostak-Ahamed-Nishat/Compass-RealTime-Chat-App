@@ -1,0 +1,58 @@
+import * as React from 'react'
+import { motion, useReducedMotion } from 'framer-motion'
+import { cn } from '@/lib/utils'
+import { formatMessageTime } from '@/lib/message'
+import { ConversationAvatar } from './conversation-avatar'
+import type { Message } from '@/types'
+
+export interface MessageBubbleProps {
+  message: Message
+  isOwn: boolean
+  senderName?: string
+}
+
+const MessageBubble = ({ message, isOwn, senderName }: MessageBubbleProps) => {
+  const shouldReduceMotion = useReducedMotion()
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.15, ease: 'easeOut' }}
+      className={cn(
+        'flex items-end gap-2 px-4 py-1',
+        isOwn ? 'flex-row-reverse' : 'flex-row'
+      )}
+    >
+      {!isOwn && <ConversationAvatar name={senderName ?? 'Unknown'} size="sm" />}
+
+      <div
+        className={cn(
+          'flex max-w-[75%] flex-col gap-1',
+          isOwn ? 'items-end' : 'items-start'
+        )}
+      >
+        {!isOwn && senderName && (
+          <span className="px-1 text-xs font-medium text-primary">
+            {senderName}
+          </span>
+        )}
+        <div
+          className={cn(
+            'whitespace-pre-wrap break-words rounded-2xl px-4 py-2 text-sm leading-relaxed',
+            isOwn
+              ? 'rounded-br-md bg-primary text-primary-foreground'
+              : 'rounded-bl-md border border-gray-200 bg-white text-gray-900'
+          )}
+        >
+          {message.text}
+        </div>
+        <span className="px-1 text-[11px] text-secondary">
+          {formatMessageTime(message.createdAt)}
+        </span>
+      </div>
+    </motion.div>
+  )
+}
+
+export { MessageBubble }

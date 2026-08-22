@@ -10,6 +10,13 @@ export function getConversationAvatarUser(conversation: Conversation): User | nu
   return conversation.type === 'direct' ? conversation.participant : null
 }
 
+export function getSenderName(conversation: Conversation, senderId: string): string {
+  if (conversation.type === 'direct') return conversation.participant.name
+  return (
+    conversation.participants.find((p) => p._id === senderId)?.name ?? 'Unknown'
+  )
+}
+
 export function getConversationSubtitle(conversation: Conversation): string {
   const { lastMessage } = conversation
   if (!lastMessage || !('text' in lastMessage) || !lastMessage.text) {

@@ -2,6 +2,7 @@ export { Button, type ButtonProps } from './button'
 export { IconButton, type IconButtonProps } from './icon-button'
 export { Input, type InputProps } from './input'
 export { Avatar, AvatarImage, AvatarFallback } from './avatar'
+export { EmojiPickerComponent } from './emoji-picker'
 export {
   Dialog,
   DialogPortal,
