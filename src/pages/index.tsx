@@ -1,5 +1,6 @@
 import React, { useState, useContext } from 'react'
 import { useRouter } from 'next/router'
+import { Button, Input } from '@/components/ui'
 import { AuthContext } from './_app'
 
 export default function LoginPage() {
@@ -53,7 +54,7 @@ export default function LoginPage() {
 
         <form onSubmit={handleLogin} className="space-y-4">
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded text-sm">
               {error}
             </div>
           )}
@@ -62,12 +63,11 @@ export default function LoginPage() {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Phone Number
             </label>
-            <input
+            <Input
               type="tel"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               placeholder="+1 (555) 123-4567"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               disabled={loading}
               required
             />
@@ -77,24 +77,24 @@ export default function LoginPage() {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Name
             </label>
-            <input
+            <Input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Your name"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               disabled={loading}
               required
             />
           </div>
 
-          <button
+          <Button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition-colors disabled:opacity-50"
+            className="w-full"
+            size="lg"
           >
             {loading ? 'Logging in...' : 'Log In'}
-          </button>
+          </Button>
         </form>
 
         <p className="text-center text-gray-600 text-sm mt-6">

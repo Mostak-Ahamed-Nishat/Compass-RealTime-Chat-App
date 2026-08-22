@@ -23,7 +23,13 @@
     "autoprefixer": "^10.4.16",
     "lucide-react": "^0.292.0",
     "clsx": "^2.0.0",
-    "tailwind-merge": "^2.2.0"
+    "tailwind-merge": "^2.2.0",
+    "@radix-ui/react-dialog": "*",
+    "@radix-ui/react-dropdown-menu": "*",
+    "@radix-ui/react-avatar": "*",
+    "@radix-ui/react-scroll-area": "*",
+    "@radix-ui/react-separator": "*",
+    "@radix-ui/react-popover": "*"
   },
   "devDependencies": {
     "eslint": "^8.50.0",
