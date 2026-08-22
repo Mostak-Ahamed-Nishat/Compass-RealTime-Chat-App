@@ -95,6 +95,9 @@ const LoginForm = ({ onSuccess }: LoginFormProps) => {
             {...register('phone', {
               required: 'Phone number is required',
               validate: (value) => {
+                if (!/^\d+$/.test(value.replace(/\s/g, ''))) {
+                  return 'Phone number must contain only digits'
+                }
                 const digits = value.replace(/\D/g, '')
                 if (digits.length < 10)
                   return 'Phone number must be at least 10 digits'
@@ -114,6 +117,9 @@ const LoginForm = ({ onSuccess }: LoginFormProps) => {
               validate: (value) => {
                 const trimmed = value.trim()
                 if (!trimmed) return 'Name is required'
+                if (!/^[a-zA-Z\s]+$/.test(trimmed)) {
+                  return 'Name must contain only letters and spaces'
+                }
                 if (trimmed.length < 3)
                   return 'Name must be at least 3 characters'
                 return true

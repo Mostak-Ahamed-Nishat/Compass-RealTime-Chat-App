@@ -15,5 +15,13 @@ export {
   DialogDescription,
 } from './dialog'
 export { ScrollArea, ScrollBar } from './scroll-area'
+export {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuPortal,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from './dropdown-menu'
 export { Separator } from './separator'
 export { Logo, type LogoProps } from './logo'

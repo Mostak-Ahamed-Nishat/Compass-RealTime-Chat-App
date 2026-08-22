@@ -1,6 +1,13 @@
 import * as React from 'react'
 import { LogOut, Moon, Plus, Search, Users } from 'lucide-react'
-import { IconButton, Logo } from '@/components/ui'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  IconButton,
+  Logo,
+} from '@/components/ui'
 import { cn } from '@/lib/utils'
 import { getConversationAvatarUser, getConversationName } from '@/lib/conversation'
 import { ConversationAvatar } from './conversation-avatar'
@@ -51,19 +58,39 @@ const Sidebar = ({
   return (
     <aside
       className={cn(
-        'flex h-full w-full max-w-[370px] shrink-0 flex-col border-r border-gray-200 bg-white',
+        'flex min-h-0 w-full flex-1 flex-col bg-white md:h-full md:max-w-[370px] md:shrink-0 md:border-r md:border-gray-200',
         className
       )}
     >
       <div className="flex items-center justify-between px-4 py-4">
         <Logo variant="dark" />
-        <div className="flex items-center gap-1">
+
+        <div className="hidden items-center gap-1 md:flex">
           <IconButton icon={<Users className="h-5 w-5" />} label="Contacts" />
           <IconButton icon={<Moon className="h-5 w-5" />} label="Toggle theme" />
         </div>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            className="rounded-full md:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+            aria-label="Account menu"
+          >
+            <ConversationAvatar name={currentUser.name} size="sm" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem>
+              <Moon className="h-4 w-4" />
+              Toggle theme
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={onLogout}>
+              <LogOut className="h-4 w-4" />
+              Log out
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
-      <div className="px-4 pb-3">
+      <div className="px-4 pb-5">
         <div className="relative">
           <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
           <input
@@ -77,7 +104,7 @@ const Sidebar = ({
       </div>
 
       {recentContacts.length > 0 && (
-        <div className="flex gap-4 overflow-x-auto px-4 pb-4">
+        <div className="flex gap-4 overflow-x-auto px-4 pb-5 pt-1">
           <div className="flex shrink-0 flex-col items-center gap-1.5">
             <ConversationAvatar name={currentUser.name} size="lg" ring="primary" />
             <span className="text-xs text-secondary">Me</span>
@@ -124,7 +151,7 @@ const Sidebar = ({
         )}
       </div>
 
-      <div className="flex items-center justify-between border-t border-gray-200 px-4 py-3">
+      <div className="hidden items-center justify-between border-t border-gray-200 px-4 py-3 md:flex">
         <div className="flex min-w-0 items-center gap-3">
           <ConversationAvatar name={currentUser.name} />
           <div className="min-w-0">

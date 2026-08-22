@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Info, Phone, Video } from 'lucide-react'
+import { ArrowLeft, Info, Phone, Video } from 'lucide-react'
 import { IconButton } from '@/components/ui'
 import { getConversationName } from '@/lib/conversation'
 import { ConversationAvatar } from './conversation-avatar'
@@ -8,9 +8,10 @@ import type { Conversation } from '@/types'
 export interface ChatHeaderProps {
   conversation: Conversation
   onToggleDetails?: () => void
+  onBack?: () => void
 }
 
-const ChatHeader = ({ conversation, onToggleDetails }: ChatHeaderProps) => {
+const ChatHeader = ({ conversation, onToggleDetails, onBack }: ChatHeaderProps) => {
   const name = getConversationName(conversation)
   const subtitle =
     conversation.type === 'group'
@@ -18,8 +19,16 @@ const ChatHeader = ({ conversation, onToggleDetails }: ChatHeaderProps) => {
       : null
 
   return (
-    <header className="flex h-[73px] shrink-0 items-center justify-between border-b border-gray-200 bg-white px-6">
-      <div className="flex min-w-0 items-center gap-3">
+    <header className="flex h-[73px] shrink-0 items-center justify-between border-b border-gray-200 bg-white px-4 md:px-6">
+      <div className="flex min-w-0 items-center gap-2 md:gap-3">
+        {onBack && (
+          <IconButton
+            icon={<ArrowLeft className="h-5 w-5" />}
+            label="Back to chats"
+            onClick={onBack}
+            className="md:hidden"
+          />
+        )}
         <ConversationAvatar name={name} />
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold text-gray-900">{name}</p>

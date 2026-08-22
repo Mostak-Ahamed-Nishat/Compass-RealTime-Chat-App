@@ -1,8 +1,9 @@
 import React, { useContext, useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import { AuthContext } from './_app'
-import { Sidebar, ChatHeader } from '@/components/chat'
+import { Sidebar, ChatHeader, MobileTabBar } from '@/components/chat'
 import { auth as tokenStore } from '@/lib/auth'
+import { cn } from '@/lib/utils'
 import type { Conversation } from '@/types'
 
 // Placeholder data for the sidebar/header layout until GET /conversations is wired up.
@@ -47,6 +48,7 @@ export default function ChatPage() {
   const [selectedConversationId, setSelectedConversationId] = useState<
     string | null
   >(MOCK_CONVERSATIONS[0]?._id ?? null)
+  const [mobileView, setMobileView] = useState<'list' | 'thread'>('list')
 
   useEffect(() => {
     if (!isLoading && !currentUser) {
@@ -57,6 +59,11 @@ export default function ChatPage() {
   const handleLogout = () => {
     tokenStore.clearToken()
     router.push('/')
+  }
+
+  const handleSelectConversation = (id: string) => {
+    setSelectedConversationId(id)
+    setMobileView('thread')
   }
 
   if (isLoading || !currentUser) {
@@ -75,19 +82,39 @@ export default function ChatPage() {
   )
 
   return (
-    <div className="flex h-screen bg-white">
-      <Sidebar
-        currentUser={currentUser}
-        conversations={MOCK_CONVERSATIONS}
-        selectedConversationId={selectedConversationId}
-        onSelectConversation={setSelectedConversationId}
-        onLogout={handleLogout}
-      />
+    <div className="flex h-screen overflow-hidden bg-white">
+      <div
+        className={cn(
+          'flex-col md:flex md:h-full md:w-auto md:shrink-0',
+          mobileView === 'list' ? 'flex h-full w-full' : 'hidden'
+        )}
+      >
+        <Sidebar
+          currentUser={currentUser}
+          conversations={MOCK_CONVERSATIONS}
+          selectedConversationId={selectedConversationId}
+          onSelectConversation={handleSelectConversation}
+          onLogout={handleLogout}
+        />
+        <MobileTabBar
+          active="chats"
+          onChange={() => {}}
+          className="md:hidden"
+        />
+      </div>
 
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div
+        className={cn(
+          'min-w-0 flex-col md:flex md:flex-1',
+          mobileView === 'thread' ? 'flex h-full w-full' : 'hidden'
+        )}
+      >
         {selectedConversation ? (
           <>
-            <ChatHeader conversation={selectedConversation} />
+            <ChatHeader
+              conversation={selectedConversation}
+              onBack={() => setMobileView('list')}
+            />
             <main className="flex flex-1 items-center justify-center bg-gray-50">
               <p className="text-sm text-secondary">
                 Message list coming soon
