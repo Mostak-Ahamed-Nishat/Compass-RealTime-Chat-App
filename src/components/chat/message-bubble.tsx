@@ -2,6 +2,7 @@ import * as React from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { formatMessageTime } from '@/lib/message'
+import { ReadReceipt } from '@/components/ui'
 import { ConversationAvatar } from './conversation-avatar'
 import type { Message } from '@/types'
 
@@ -58,18 +59,21 @@ const MessageBubble = ({
         >
           {message.text}
         </div>
-        <span
-          className={cn(
-            'px-1 text-[11px]',
-            isFailed ? 'font-medium text-red-500' : 'text-secondary'
-          )}
-        >
-          {isFailed
-            ? 'Failed to send'
-            : isSending
-              ? 'Sending…'
-              : formatMessageTime(message.createdAt)}
-        </span>
+        <div className="flex items-center gap-1 px-1">
+          <span
+            className={cn(
+              'text-[11px]',
+              isFailed ? 'font-medium text-red-500' : 'text-secondary'
+            )}
+          >
+            {isFailed
+              ? 'Failed to send'
+              : isSending
+                ? 'Sending…'
+                : formatMessageTime(message.createdAt)}
+          </span>
+          {isOwn && <ReadReceipt seen={message.seen} sending={isSending} />}
+        </div>
       </div>
     </motion.div>
   )

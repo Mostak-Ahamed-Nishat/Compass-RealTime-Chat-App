@@ -20,6 +20,7 @@ import {
   messages as messagesApi,
 } from '@/lib/api'
 import { connectSocket, disconnectSocket, getSocket } from '@/lib/socket'
+import { getMockPresence, getMockLastSeen, enrichMessagesWithSeenStatus } from '@/lib/mock-presence'
 import { cn } from '@/lib/utils'
 import type {
   Conversation,
@@ -121,6 +122,34 @@ export default function ChatPage() {
     }
   }, [conversations, selectedConversationId])
 
+  // Enrich conversations with mock presence data for direct conversations.
+  // In a real app, this would come from Socket.io presence events or an API.
+  useEffect(() => {
+    setConversations((prev) =>
+      prev.map((conversation) => {
+        if (conversation.type === 'direct') {
+          return {
+            ...conversation,
+            participant: {
+              ...conversation.participant,
+              isOnline: getMockPresence(conversation.participant._id),
+              lastSeen: getMockLastSeen(conversation.participant._id),
+            },
+          }
+        }
+        // For group conversations, enrich participants with presence
+        return {
+          ...conversation,
+          participants: conversation.participants.map((participant) => ({
+            ...participant,
+            isOnline: getMockPresence(participant._id),
+            lastSeen: getMockLastSeen(participant._id),
+          })),
+        }
+      })
+    )
+  }, []) // Run once on mount
+
   // Fetch each conversation's history the first time it's opened, and cache it.
   // Gated by a ref (not the `messageLoadState` it writes to) — depending on
   // that state here would re-run this effect the instant it calls
@@ -140,9 +169,11 @@ export default function ChatPage() {
       .getMessages(conversationId)
       .then((res) => {
         if (cancelled) return
+        const messages = (res as MessageListResponse).messages ?? []
+        const enrichedMessages = enrichMessagesWithSeenStatus(messages)
         setMessagesByConversation((prev) => ({
           ...prev,
-          [conversationId]: (res as MessageListResponse).messages ?? [],
+          [conversationId]: enrichedMessages,
         }))
         setMessageLoadState((prev) => ({ ...prev, [conversationId]: 'loaded' }))
       })
@@ -185,6 +216,8 @@ export default function ChatPage() {
         sender: payload.sender,
         text: payload.text,
         createdAt: new Date(payload.createdAt).toISOString(),
+        // Incoming messages from other users are initially not seen
+        seen: false,
       }
       setMessagesByConversation((prev) => {
         const existing = prev[message.conversation] ?? []
@@ -471,6 +504,7 @@ export default function ChatPage() {
       text,
       createdAt: new Date().toISOString(),
       status: 'sending',
+      seen: false,
     }
 
     setMessagesByConversation((prev) => ({

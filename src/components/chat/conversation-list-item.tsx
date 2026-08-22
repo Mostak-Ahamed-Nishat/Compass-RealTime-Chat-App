@@ -10,6 +10,14 @@ import {
 import { ConversationAvatar } from './conversation-avatar'
 import type { Conversation } from '@/types'
 
+// Helper to get presence for conversation
+const getConversationIsOnline = (conversation: Conversation): boolean | undefined => {
+  if (conversation.type === 'direct') {
+    return conversation.participant.isOnline
+  }
+  return undefined
+}
+
 export interface ConversationListItemProps {
   conversation: Conversation
   isActive?: boolean
@@ -29,6 +37,7 @@ const ConversationListItem = ({
 }: ConversationListItemProps) => {
   const name = nickname || getConversationName(conversation)
   const subtitle = getConversationSubtitle(conversation)
+  const isOnline = getConversationIsOnline(conversation)
   const timestamp = formatRelativeTime(
     conversation.lastMessage &&
     'text' in conversation.lastMessage &&
@@ -50,7 +59,12 @@ const ConversationListItem = ({
           : 'border-transparent hover:bg-gray-50'
       )}
     >
-      <ConversationAvatar name={name} className="shrink-0" />
+      <ConversationAvatar
+        name={name}
+        isOnline={isOnline ?? true}
+        showPresence={conversation.type === 'direct'}
+        className="shrink-0"
+      />
 
       <div className="min-w-0 flex-1">
         <div className="flex items-baseline justify-between gap-2">

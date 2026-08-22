@@ -27,3 +27,5 @@ export {
 export { Separator } from './separator'
 export { Logo, type LogoProps } from './logo'
 export { ConfirmDialog, type ConfirmDialogProps } from './confirm-dialog'
+export { PresenceIndicator, type PresenceIndicatorProps } from './presence-indicator'
+export { ReadReceipt, type ReadReceiptProps } from './read-receipt'

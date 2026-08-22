@@ -3,6 +3,9 @@ export interface User {
   name: string
   phone: string
   createdAt?: string
+  // Client-only: presence status. In a real app, would come from Socket.io or presence API.
+  isOnline?: boolean
+  lastSeen?: string
 }
 
 export interface Message {
@@ -13,6 +16,8 @@ export interface Message {
   createdAt: string
   // Client-only, set while an optimistic send is in flight or has failed.
   status?: 'sending' | 'failed'
+  // Client-only: read receipt status. In a real app, would come from API.
+  seen?: boolean
 }
 
 export interface ConversationDirect {

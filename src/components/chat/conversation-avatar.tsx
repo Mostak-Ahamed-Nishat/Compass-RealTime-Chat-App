@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui'
+import { Avatar, AvatarFallback, AvatarImage, PresenceIndicator } from '@/components/ui'
 import { cn, getInitials } from '@/lib/utils'
 
 export interface ConversationAvatarProps {
@@ -7,6 +7,8 @@ export interface ConversationAvatarProps {
   imageUrl?: string
   size?: 'sm' | 'md' | 'lg'
   ring?: 'none' | 'primary' | 'accent'
+  isOnline?: boolean
+  showPresence?: boolean
   className?: string
 }
 
@@ -27,12 +29,21 @@ const ConversationAvatar = ({
   imageUrl,
   size = 'md',
   ring = 'none',
+  isOnline = true,
+  showPresence = false,
   className,
 }: ConversationAvatarProps) => (
-  <Avatar className={cn(sizeClasses[size], ringClasses[ring], className)}>
-    {imageUrl && <AvatarImage src={imageUrl} alt={name} />}
-    <AvatarFallback>{getInitials(name)}</AvatarFallback>
-  </Avatar>
+  <div className="relative inline-flex">
+    <Avatar className={cn(sizeClasses[size], ringClasses[ring], className)}>
+      {imageUrl && <AvatarImage src={imageUrl} alt={name} />}
+      <AvatarFallback>{getInitials(name)}</AvatarFallback>
+    </Avatar>
+    {showPresence && (
+      <div className="absolute bottom-0 right-0">
+        <PresenceIndicator isOnline={isOnline} />
+      </div>
+    )}
+  </div>
 )
 
 export { ConversationAvatar }
