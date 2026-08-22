@@ -65,7 +65,7 @@ const NewChatDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-sm overflow-hidden p-0">
+      <DialogContent className="overflow-hidden p-0 md:max-w-sm">
         <DialogHeader className="px-5 pt-5">
           <DialogTitle>New chat</DialogTitle>
         </DialogHeader>
