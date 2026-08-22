@@ -8,10 +8,10 @@ A real-time messaging app built for a frontend take-home assignment — direct a
 
 | | URL |
 |---|---|
-| App (Part 1) | _pending deployment_ |
-| Landing page (Part 2) | _pending deployment_ |
+| Landing page (Part 2) | **[compass-chat-app.vercel.app](https://compass-chat-app.vercel.app/)** |
+| App (Part 1) | **[compass-chat-app.vercel.app/login](https://compass-chat-app.vercel.app/login)** → sign in with any phone number + name to reach `/chat` |
 
-> Both parts live in the same Next.js app (`/` is the landing page, `/chat` is the product) and ship from a single deployment. This table will be filled in once that deploy is live.
+> Both parts live in the same Next.js app and ship from a single deployment: `/` is the landing page, `/login` is sign-in, `/chat` is the product. There's no password — any new phone number auto-registers.
 
 ## Contents
 
@@ -143,4 +143,3 @@ Documented here rather than glossed over, in the spirit of the assignment's "cle
 - **Tap-to-retry on a failed send isn't wired up.** A failed optimistic message renders in a visibly failed state (see `MessageBubble`), but there's no retry action yet — the intended bonus for Part 1.
 - **Presence ("Online now" / last-seen) is simulated client-side**, not sourced from the API — the live API doesn't expose a presence event, so it's mocked for visual completeness rather than claimed as real.
 - **No automated test suite committed.** The app was verified by hand and with ad hoc Playwright scripts driven against a running dev server during development (see [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)), but no `__tests__`/`e2e` directory is part of this submission.
-- **Not yet deployed.** Both live-demo links above are placeholders pending a Vercel deploy.

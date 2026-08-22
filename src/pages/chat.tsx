@@ -206,8 +206,11 @@ export default function ChatPage() {
 
   // Real-time: connect once per session and listen for events from OTHER
   // participants. `message:new` and `conversation:updated` are confirmed
-  // working; `typing` is inferred by analogy (same relay pattern) and isn't
-  // documented, so it's best-effort.
+  // working. `typing` is kept wired up in case the server ever relays it,
+  // but direct probing of the live server (two real accounts, sniffing
+  // every socket event) confirmed it never actually relays a `typing`
+  // emit between two different accounts — so this listener is inert
+  // against the real API today, not a fake/simulated indicator.
   useEffect(() => {
     if (!currentUser?._id) return
     const token = tokenStore.getToken()
@@ -592,6 +595,7 @@ export default function ChatPage() {
             mutedConversationIds={mutedConversationIds}
             unreadCounts={unreadCounts}
             nicknames={nicknames}
+            typingConversationId={typingConversationId}
           />
           <MobileTabBar
             active="chats"

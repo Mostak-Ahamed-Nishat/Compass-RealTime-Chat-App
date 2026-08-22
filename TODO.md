@@ -1,17 +1,19 @@
 # Compass Chat — TODO
 
 **Deadline:** Aug 22, 2026 4:00 PM
-**Status:** Feature-complete; deployment is the one open blocker before submission.
+**Status:** Feature-complete and deployed. Nothing blocking submission.
 
 This file tracks concrete, actionable items. For narrative reasoning behind what's done and what's deliberately deferred, see [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md); for a status overview see [PROGRESS.md](PROGRESS.md).
 
+**Live:** [compass-chat-app.vercel.app](https://compass-chat-app.vercel.app/)
+
 ---
 
-## Blocking submission
+## Submission-blocking (none open)
 
-- [ ] Deploy to Vercel (or equivalent) and get a live URL for the app (`/`, `/login`, `/chat`)
-- [ ] Add that URL to [README.md](README.md)'s Live Demo table (the same deployment serves both Part 1 and Part 2 — see the README note on why)
-- [ ] Smoke-test the deployed URL: login, send a message, open on mobile width
+- [x] Deploy to Vercel and get a live URL for the app (`/`, `/login`, `/chat`)
+- [x] Add that URL to [README.md](README.md)'s Live Demo table (the same deployment serves both Part 1 and Part 2 — see the README note on why)
+- [x] Smoke-test the deployed URL: landing page renders, login on production redirects to `/chat`, dashboard loads with the logged-in user's name — verified end-to-end, not just that the routes respond
 
 ## Part 1 — implementation
 

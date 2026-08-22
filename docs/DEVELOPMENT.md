@@ -79,7 +79,7 @@ Roughly in priority order:
 5. **Virtualize the message list** for conversations with very long histories, once pagination exists — rendering every message in the DOM is fine at the scale this API returns today, not at scale.
 6. **An accessibility pass** beyond what Radix gives for free — keyboard-only walkthroughs of the whole app, contrast-checking the amber accent against its backgrounds, and screen-reader labels on icon-only controls.
 7. **Dark mode**, called out in the brief as a stretch goal — the token layer is already structured (`primary`/`accent`/`secondary` rather than raw Tailwind colors) to make this a token-swap exercise rather than a rewrite.
-8. **CI/CD** — type-check and (once it exists) the test suite running on push, plus the actual Vercel deployment this submission is currently missing.
+8. **CI/CD** — type-check and (once it exists) the test suite running on push, so a broken build can't reach the [live deployment](https://compass-chat-app.vercel.app/) the way it currently could.
 
 ## API issues encountered
 
@@ -97,5 +97,5 @@ The full list with request/response examples lives in [docs/API.md](API.md); the
 ## Assumptions made
 
 - Client-side `localStorage` token storage is acceptable for this take-home given the API itself has no real authentication (see the "no password check" note above) — a production app with real credentials would need httpOnly cookies or a more defended token strategy.
-- "Connectly" is used as the in-product brand name (visible in the UI's logo/header) while "Compass Chat" is the assignment/project name — a deliberate split between the take-home's working title and the fictional product being designed, not an inconsistency.
+- The in-product brand shown in the UI's logo/header is "Compass," matching the assignment/project name ("Compass Chat") rather than introducing a separate fictional product name.
 - Where the brief left a UI decision open (e.g., exactly how a direct conversation's header should differ from a group's), I made the call that seemed most consistent with the reference layout's intent and noted the reasoning in code comments or here rather than leaving it undocumented.

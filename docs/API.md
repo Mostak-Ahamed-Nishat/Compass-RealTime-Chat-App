@@ -256,6 +256,8 @@ Sending is still done through `POST /messages`; that call is what triggers the b
 
 If the socket connection fails, fall back to polling `GET /conversations/{id}/messages` every 1–2 seconds and merging by `_id`.
 
+**No typing or read-receipt relay.** Confirmed by directly probing the live server with two real accounts and `socket.onAny` sniffing every incoming event: emitting `typing` (and variant payload shapes) from one account is never relayed to the other. Emitting any of `message:seen`, `message:read`, `seen`, `read`, `conversation:read`, `mark_read` produces no response either — there's no read-receipt mechanism at all, not even under a different name. There is also no `readBy`/`seenBy` field anywhere in the Message or Conversation shapes. Conclusion: a "typing…" indicator or a "seen" tick that reflects another real account's actual behavior cannot be built against this API — only `message:new` and `conversation:updated` actually relay between accounts.
+
 ---
 
 ## Errors

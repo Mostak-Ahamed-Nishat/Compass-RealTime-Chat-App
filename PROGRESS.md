@@ -12,8 +12,8 @@
 | **Part 1: Implementation** | 🟢 Functionally complete | Login, search, direct + group chat, real-time, states, auto-scroll all built. A few UI-wiring gaps remain — see below |
 | **Part 2: Landing Page** | 🟢 Complete | Original design, live interactive chat demo as the bonus, GSAP/Framer motion pass done |
 | **Part 3: Write-up** | 🟢 Complete | [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) |
-| **Deployment** | 🔴 Not started | No live URL yet — the one hard blocker before submission |
-| **Submission** | 🟡 Blocked on deployment | Repo, README, and write-up are ready; just needs the live links |
+| **Deployment** | 🟢 Live | [compass-chat-app.vercel.app](https://compass-chat-app.vercel.app/) — verified end-to-end: landing renders, login redirects to `/chat`, dashboard loads correctly |
+| **Submission** | 🟢 Ready | Repo, README, write-up, and live links are all in place |
 
 ---
 
@@ -67,17 +67,16 @@
 - ✅ Improvements-with-more-time list
 - ✅ API quirks documented (and cross-checked against the actual client code — see [docs/API.md](docs/API.md))
 - ✅ README rewritten with setup instructions, tech stack, and feature status
-- 🔴 Part 1 deployed to a live URL
-- 🔴 Part 2 deployed to a live URL
-- 🔴 Both URLs tested and added to README
+- ✅ Part 1 deployed to a live URL ([compass-chat-app.vercel.app/login](https://compass-chat-app.vercel.app/login))
+- ✅ Part 2 deployed to a live URL ([compass-chat-app.vercel.app](https://compass-chat-app.vercel.app/))
+- ✅ Both URLs tested and added to README
 - ✅ GitHub repo exists and is current
 
 ---
 
 ## What's actually left before this can be submitted
 
-1. **Deploy to Vercel (or similar) and add both URLs to the README.** Per the assignment, a submission without working demo links won't be reviewed — this is the only remaining blocker.
-2. Optional polish if time allows, roughly in priority order: tap-to-retry on a failed send, promote-to-admin in the group menu, older-message pagination.
+Nothing blocking — repo, docs, and live links are all in place. Optional polish if time allows, roughly in priority order: tap-to-retry on a failed send, promote-to-admin in the group menu, older-message pagination.
 
 ---
 

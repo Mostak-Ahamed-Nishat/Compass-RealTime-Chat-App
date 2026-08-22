@@ -29,40 +29,7 @@ export const getMockLastSeen = (userId: string): string => {
   return lastSeenMap[userId] || 'recently'
 }
 
-// Mock read receipt data: track which messages have been seen
-// In a real app, this would come from the API
-const mockSeenMessages: Set<string> = new Set()
-
-// Mark a message as seen
-export const markMessageAsSeen = (messageId: string) => {
-  mockSeenMessages.add(messageId)
-}
-
-// Check if a message has been seen
-export const isMessageSeen = (messageId: string): boolean => {
-  // By default, messages are marked as seen after a short delay
-  return mockSeenMessages.has(messageId)
-}
-
-// Simulate message delivery (mark messages as seen)
-export const initializeMockReadReceipts = () => {
-  // Mark all messages as seen on load (simulating delivery)
-  // In a real app, you'd listen to Socket.io events for read receipts
-  if (typeof window !== 'undefined') {
-    const timer = setTimeout(() => {
-      // This would be populated by actual Socket.io events
-      // For now, all messages are seen by default
-    }, 500)
-    return () => clearTimeout(timer)
-  }
-}
-
-// Helper to enrich messages with mock seen status
-// For demo purposes: all messages are marked as seen by default
-export const enrichMessagesWithSeenStatus = (messages: any[]) => {
-  return messages.map((msg, index) => ({
-    ...msg,
-    // For demo: mark all messages except the last one as seen
-    seen: index < messages.length - 1,
-  }))
-}
+// Read receipts are NOT faked here — the live API has no "seen"/"read"
+// endpoint or socket event (confirmed by directly probing the server: no
+// such event is ever relayed between two different accounts), so there is
+// no real data to enrich messages with. See ui/read-receipt.tsx.

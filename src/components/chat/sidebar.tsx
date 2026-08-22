@@ -30,6 +30,7 @@ export interface SidebarProps {
   mutedConversationIds?: Set<string>
   nicknames?: Record<string, string>
   unreadCounts?: Record<string, number>
+  typingConversationId?: string | null
   className?: string
 }
 
@@ -48,6 +49,7 @@ const Sidebar = ({
   mutedConversationIds,
   nicknames,
   unreadCounts,
+  typingConversationId,
   className,
 }: SidebarProps) => {
   const [query, setQuery] = React.useState('')
@@ -229,6 +231,7 @@ const Sidebar = ({
               muted={mutedConversationIds?.has(conversation._id)}
               nickname={nicknames?.[conversation._id]}
               unreadCount={unreadCounts?.[conversation._id] ?? 0}
+              isTyping={typingConversationId === conversation._id}
               onClick={() => onSelectConversation(conversation._id)}
             />
           ))

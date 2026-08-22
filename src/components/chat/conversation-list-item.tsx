@@ -24,6 +24,7 @@ export interface ConversationListItemProps {
   unreadCount?: number
   muted?: boolean
   nickname?: string
+  isTyping?: boolean
   onClick?: () => void
 }
 
@@ -33,6 +34,7 @@ const ConversationListItem = ({
   unreadCount = 0,
   muted = false,
   nickname,
+  isTyping = false,
   onClick,
 }: ConversationListItemProps) => {
   const name = nickname || getConversationName(conversation)
@@ -74,7 +76,14 @@ const ConversationListItem = ({
           <span className="shrink-0 text-xs text-secondary">{timestamp}</span>
         </div>
         <div className="mt-0.5 flex items-center justify-between gap-2">
-          <span className="truncate text-sm text-secondary">{subtitle}</span>
+          <span
+            className={cn(
+              'truncate text-sm',
+              isTyping ? 'font-medium italic text-primary' : 'text-secondary'
+            )}
+          >
+            {isTyping ? 'typing…' : subtitle}
+          </span>
           <div className="flex shrink-0 items-center gap-1.5">
             {muted && <BellOff className="h-3.5 w-3.5 text-gray-400" />}
             {unreadCount > 0 && (
