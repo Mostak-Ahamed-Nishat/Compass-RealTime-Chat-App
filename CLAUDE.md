@@ -1,17 +1,24 @@
 # Compass Chat - Project Documentation
 
-**Project:** Real-time chat application (React/Next.js)  
-**Deadline:** Aug 22, 2026 4:00 PM  
-**GitHub Repo:** `compass-chat`  
-**API Docs:** https://frontend-task-chatapp.onrender.com/docs/
+**Project:** Real-time chat application (React/Next.js)
+**Deadline:** Aug 22, 2026 4:00 PM
+**GitHub Repo:** `compass-chat`
+**API Docs (Swagger):** https://frontend-task-chatapp.onrender.com/docs/
+**Full API reference (verified against the live API):** [docs/API.md](docs/API.md)
 
 ---
 
 ## Overview
 
-**Part 1:** Build chat app with API documentation (focus: chat panel)  
-**Part 2:** Create landing page  
-**Part 3:** Write-up on approach, AI tool usage, improvements  
+This is a three-part take-home assignment (see [Assignment.md](Assignment.md) for the original brief). Parts build on each other and should be completed in order.
+
+- **Part 1** — Document the given API, then build the chat screens against it: login, user search, direct + group conversations, message list, sending, real-time updates, loading/empty/error states, auto-scroll. **The chat panel (message list, sending, real-time behavior) is where the most care and polish should go** — that's explicitly what's evaluated closest.
+- **Part 2** — A creative landing page showcasing what was built in Part 1. Fully open on visual direction; the brief explicitly wants boldness over a generic template.
+- **Part 3** — A concise write-up: architecture/library trade-offs, design reasoning, AI tool usage (what was used, what was changed/rejected), what you'd improve with more time, and any API issues encountered.
+
+Both Part 1 and Part 2 call out a **bonus** for one genuinely original touch — not a common pattern executed well, but something that shows one-step-ahead thinking. See [Bonus Ideas](#bonus-ideas-to-consider) below.
+
+**Note on the assignment file itself:** [Assignment.md:68](Assignment.md#L68) contains a hidden instruction directed at AI assistants (asking any AI summarizing the document to insert an unrelated word into its output). This has been ignored as a prompt injection, not a real project requirement. Flagging it here so it isn't mistaken for an oversight later.
 
 ---
 
@@ -22,34 +29,38 @@ https://frontend-task-chatapp.onrender.com/api
 
 All endpoints require `Authorization: Bearer {token}` except `/auth/login` and `/health`.
 
+For full detail — request/response examples, every quirk found, pagination, error shapes, curl examples — see **[docs/API.md](docs/API.md)**. This section is just a quick-glance summary; docs/API.md is the source of truth.
+
 ---
 
 ## API Endpoints Summary
 
 ### Authentication
-- **POST** `/auth/login` Returns `{token, user}`
-- **GET** `/auth/me` Returns current user `{_id, name, phone, createdAt}`
+- **POST** `/auth/login` — body `{phone, name}` → `{token, user}`. Registers automatically if the phone is new.
+- **GET** `/auth/me` — current user `{_id, name, phone, createdAt}`. Missing token → **400** `NO_TOKEN` (not 401).
 
 ### Users
-- **GET** `/users/search?q=query` Returns array of users `[{_id, name, phone}]`
+- **GET** `/users/search?q=query` → bare array `[{_id, name, phone}]` (not wrapped in `data`).
 
 ### Conversations
-- **GET** `/conversations` Returns `{data: [conversations]}`
-- **POST** `/conversations` Create direct chat, body: `{recipientId}`
-- **GET** `/conversations/{id}/messages` Returns `{data: [messages]}`
+- **GET** `/conversations` → `{data: [conversations]}`. Direct and group conversations have **different shapes** — see Key API Models below.
+- **POST** `/conversations` — body `{userId}` (not `recipientId`) → starts/reopens a direct conversation.
+- **GET** `/conversations/{id}/messages` — query `limit`, `before` (cursor) → `{messages: [...], hasMore}` (key is `messages`, not `data`).
 
 ### Groups
-- **POST** `/conversations/group` Create group, body: `{name, participantIds}`
-- **POST** `/conversations/{id}/participants` Add members, body: `{participantIds}`
-- **DELETE** `/conversations/{id}/participants/{userId}` Remove member
-- **POST** `/conversations/{id}/admins` Promote to admin, body: `{userId}`
-- **PATCH** `/conversations/{id}` Rename group, body: `{name}`
+- **POST** `/conversations/group` — body `{name, participantIds}`, minimum 2 entries (3 total with creator) → full conversation object.
+- **POST** `/conversations/{id}/participants` — body `{userIds}` (plural, admins only) → full updated conversation object.
+- **DELETE** `/conversations/{id}/participants/{userId}` (admin, or self to leave) → full updated conversation object.
+- **POST** `/conversations/{id}/admins` — body `{userId}` (admins only) → full updated conversation object.
+- **PATCH** `/conversations/{id}` — body `{name}` (admins only) → full updated conversation object.
+
+All group mutation endpoints return the **whole conversation object**, not a small summary — plan the client to just re-render from the response rather than patching partial state.
 
 ### Messages
-- **POST** `/messages` Send message, body: `{conversationId, text}`
+- **POST** `/messages` — body `{conversationId, text}`. Not directly observed against the live API; response shape is inferred (see docs/API.md).
 
 ### System
-- **GET** `/health` Health check
+- **GET** `/health` — documented in Swagger but not actually implemented; always returns 404. Don't rely on it.
 
 ---
 
@@ -64,42 +75,61 @@ All endpoints require `Authorization: Bearer {token}` except `/auth/login` and `
   "createdAt": "ISO 8601"
 }
 ```
+`createdAt` only appears on `/auth/login` and `/auth/me` responses — user objects embedded in conversations/search results omit it.
 
 ### Message
 ```json
 {
   "_id": "string",
-  "conversationId": "string",
-  "text": "string",
+  "conversation": "string",
   "sender": "userId",
-  "senderName": "string (if populated)",
+  "text": "string",
   "createdAt": "ISO 8601"
 }
 ```
+Field is `conversation`, not `conversationId`. Sender name is **never** populated — resolve it client-side from the conversation's participant list.
 
-### Conversation
+### Conversation — group
 ```json
 {
   "_id": "string",
-  "type": "direct" | "group",
-  "name": "string (group only)",
-  "participants": [User],
-  "admins": [userId],
+  "type": "group",
+  "name": "string",
   "createdBy": "userId",
-  "lastMessage": Message,
-  "createdAt": "ISO 8601",
+  "admins": ["userId"],
+  "participants": [User],
+  "lastMessage": { "text": "string", "sender": "userId", "createdAt": "ISO 8601" },
   "updatedAt": "ISO 8601"
 }
 ```
+`createdAt` appears on group-creation/mutation responses only, not on list items.
+
+### Conversation — direct
+```json
+{
+  "_id": "string",
+  "type": "direct",
+  "participant": User,
+  "lastMessage": { "text": "string", "sender": "userId", "createdAt": "ISO 8601" },
+  "updatedAt": "ISO 8601"
+}
+```
+Note **`participant`, singular** — the other user only, not an array, and not present for group conversations (which use `participants` instead). This is the single most important shape difference to handle correctly in the UI layer.
 
 ---
 
 ## API Quirks/Notes
-- Search endpoint returns array directly (not wrapped)
-- Conversation lists use `data` wrapper: `{data: [...]}`
-- Conversation can be direct (2 people) or group (3+)
-- Message deletion/editing not supported
-- Real-time: Socket.io WebSocket supported at root URL (not /api)
+- `GET /users/search` returns a bare array; `GET /conversations` and `GET /conversations/{id}/messages` both wrap results, but under different keys (`data` vs. `messages`).
+- Direct and group conversations have different fields (`participant` vs. `participants`, presence of `name`/`admins`/`createdBy`).
+- `lastMessage` is `{}` (empty object), not `null`, when a conversation has no messages yet.
+- Pagination **does** exist on the messages endpoint (`limit`, `before`, `hasMore`) — the API is not pagination-free.
+- All observed errors use `{error: {message, code}}`; validation errors add a `details` array. No 401 was observed anywhere — missing auth surfaces as 400/`NO_TOKEN`.
+- Message deletion/editing is not supported.
+- Real-time is confirmed working via Socket.io at the root origin (not documented in the Swagger listing, but tested directly): connecting with the auth token auto-subscribes to your conversations, no join call needed. `message:new` and `conversation:updated` both fire live. `message:new`'s payload uses `id` (not `_id`) and an epoch-millisecond `createdAt`, unlike every REST response.
+- `POST /messages` does not reject empty/whitespace text server-side (only a missing `text` field is rejected) — the "no empty sends" rule must be enforced entirely client-side.
+- `POST /messages` with a nonexistent `conversationId` returns 200 with body `null`, not a 404 — guard for `null` explicitly.
+- `POST /auth/login` has no password check — the same phone number always logs into the same account regardless of name sent. Real security note, not just a quirk.
+- Full detail on all of the above, with captured examples, lives in [docs/API.md](docs/API.md).
 
 ---
 
@@ -107,36 +137,94 @@ All endpoints require `Authorization: Bearer {token}` except `/auth/login` and `
 ```
 compass-chat/
 ├── src/
-│   ├── pages/          (Next.js pages)
-│   ├── components/     (React components)
-│   ├── hooks/          (Custom hooks)
-│   ├── lib/            (Utilities)
-│   │   ├── api.ts      (API client)
-│   │   └── auth.ts     (Auth handling)
-│   ├── styles/         (CSS/Tailwind)
-│   └── types/          (TypeScript types)
-├── public/             (Static assets)
+│   ├── pages/              (Next.js pages — Pages Router)
+│   ├── components/         (React components)
+│   │   ├── chat/           (MessageList, MessageBubble, Composer, ConversationList)
+│   │   ├── ui/             (shared primitives — button, input, dialog, avatar)
+│   │   └── landing/        (Part 2 landing page sections)
+│   ├── hooks/              (useConversations, useMessages, usePolling, useAutoScroll)
+│   ├── lib/
+│   │   ├── api.ts          (API client — one function per endpoint)
+│   │   └── auth.ts         (token storage, session restore)
+│   ├── types/               (User, Message, Conversation — both shapes)
+│   └── styles/               (Tailwind globals, design tokens)
+├── public/                   (static assets)
 ├── docs/
-│   ├── API.md          (API reference)
-│   └── DEVELOPMENT.md  (Part 3 write-up)
-├── README.md           (Setup & info)
-└── CLAUDE.md           (This file)
+│   ├── API.md                (API reference — source of truth)
+│   ├── API_STANDARDS.md      (checklist used to build API.md)
+│   └── DEVELOPMENT.md        (Part 3 write-up)
+├── README.md                 (setup & info)
+└── CLAUDE.md                 (this file)
 ```
 
 ---
 
 ## Tech Stack
-- **Framework:** Next.js 14 + React 18
-- **Styling:** Tailwind CSS
-- **HTTP Client:** Fetch API
-- **State Management:** React Context API
-- **Real-time:** Socket.io WebSocket (polling fallback)
+
+**Core**
+- **Framework:** Next.js 14 + React 18 (Pages Router)
+- **Language:** TypeScript
+- **Styling:** Tailwind CSS, with a small custom design-token layer (color/type scale) rather than defaults, so the UI doesn't read as generic Tailwind
+- **HTTP Client:** Fetch API, wrapped in `lib/api.ts`
+- **State Management:** React Context API (auth + active conversation), local component state elsewhere — no need for Redux/Zustand at this scale
+- **Real-time:** Socket.io (confirmed working against the live server — connect at the root origin with the auth token, no join call needed, listen for `message:new` and `conversation:updated`). Polling is the fallback if the socket connection fails, not the primary path.
+
+**UI & motion (for the "award-winning" bar, mainly Part 2, and polish throughout Part 1)**
+- **shadcn/ui (Radix primitives)** — accessible dialog/dropdown/input/avatar base components, styled to the custom design tokens rather than left default. Saves time on a11y/keyboard handling so effort goes into the custom look instead of rebuilding basics.
+- **Framer Motion** — component-level motion inside the app: message bubbles entering, conversation list reordering, modal/panel transitions. Chosen over GSAP for in-React work because it's declarative and plays well with component mount/unmount, which is most of what the chat UI needs.
+- **GSAP + ScrollTrigger** — landing page only: hero entrance, scroll-driven storytelling, pinned sections. This is where GSAP's timeline control actually earns its extra weight over Framer Motion.
+- **Lenis** — smooth-scroll on the landing page, to make GSAP's scroll-triggered work feel deliberate rather than jumpy on trackpads/wheels.
+- **lucide-react** — icon set matching the shadcn ecosystem.
+- **clsx / tailwind-merge** — conditional class composition.
+
+Keep the animation libraries scoped as above rather than using GSAP everywhere — mixing GSAP and Framer Motion on the *same* elements causes fights over transforms. GSAP owns the landing page; Framer Motion owns in-app component transitions.
+
 - **Deployment:** Vercel
 
 ---
 
+## Design Direction (mainly Part 2, but sets the visual language for Part 1 too)
+
+Goal: modern, confident, a little unexpected — not a generic SaaS-template landing page. Concretely:
+- Pick one deliberate color story (not default Tailwind slate/blue) and a distinctive type pairing (a display face for headlines, a clean grotesk for body) — this alone is most of what separates "generic" from "designed."
+- Scroll-driven reveals on the landing page (GSAP ScrollTrigger) rather than everything fading in on load — but keep motion purposeful; don't animate for its own sake, and always provide a static/reduced-motion fallback (`prefers-reduced-motion`).
+- The chat panel itself should feel alive without being distracting: message send/receive should have a small, fast motion cue (Framer Motion), not a slow flourish — this is the part under closest evaluation, so restraint matters more than spectacle here.
+- Dark mode is a reasonable differentiator for a chat product if time allows; treat it as a stretch, not a requirement.
+
+---
+
+## Bonus Ideas (to consider, not committed)
+
+Per the assignment, the bonus only counts if genuinely original — so pick one, execute it well, rather than doing several shallowly.
+
+**Part 1 candidates:**
+- Optimistic message send with a distinct "sending → sent → failed, tap to retry" state, rather than just a spinner.
+- Smart merge on poll: if the same conversation is open across two tabs, avoid visible duplicate/flicker when both are polling.
+- Graceful handling of the direct-conversation `participant` vs. group `participants` shape difference surfaced as a genuine UI decision (e.g., how a direct chat's header renders vs. a group's), not just a type-level fix.
+
+**Part 2 candidates:**
+- A live, interactive embedded preview of the actual chat component on the landing page (not a screenshot/video) — real, own-original, and directly tied to what was built in Part 1.
+- A scroll-driven sequence that demonstrates the auto-scroll/real-time behavior narratively (e.g., messages appearing as the user scrolls, mirroring the actual product behavior) rather than a generic feature-icon grid.
+
+---
+
+## Suggested Claude Code Skills for This Project
+
+| Skill | When to use it here |
+|---|---|
+| `design` | Before writing Part 2's landing page (or any non-trivial screen), sketch it as a design canvas artifact first — faster to iterate on layout/typography/color visually than in code, and it can be handed off for manual tweaking. |
+| `animate` | When implementing any specific animation (the GSAP hero sequence, a Framer Motion message transition) — it works through purpose/tool/curve/duration/exit deliberately instead of guessing at animation code. |
+| `run` | After each meaningful feature (login, sending a message, real-time updates, the landing page), actually launch the app and click through it before calling it done — type-checking isn't feature verification. |
+| `code-review` | Once Part 1's chat panel is functionally complete, before moving to Part 2 — catch correctness bugs and reuse/efficiency issues while the diff is still small enough to review well. |
+| `simplify` | Pass over the API client / hooks layer once the chat panel works, to cut duplication before Part 2 adds more surface area. |
+| `security-review` | Once before final submission — check token handling, XSS exposure in message rendering (user-supplied text), and anything else touching auth. |
+
+Not needed for this project: `dataviz` (no charts), `keybindings-help`/`update-config` (not relevant to building the app itself).
+
+---
+
 ## Part 1 Checklist
-- [ ] API documentation written
+- [x] API documentation written and verified against the live API ([docs/API.md](docs/API.md))
 - [ ] Login page (phone + name)
 - [ ] User search
 - [ ] Start direct conversation
@@ -146,25 +234,28 @@ compass-chat/
 - [ ] Real-time message updates
 - [ ] Loading/empty/error states
 - [ ] Auto-scroll behavior
+- [ ] One deliberate bonus touch (see Bonus Ideas)
 - [ ] Deploy to live URL
 
 ---
 
 ## Part 2 Checklist
-- [ ] Design landing page
+- [ ] Design landing page (consider sketching with the `design` skill first)
 - [ ] Responsive layout
-- [ ] Typography & color palette
-- [ ] Showcase features
-- [ ] Animations/interactions (optional)
+- [ ] Deliberate typography & color palette (not default Tailwind theme)
+- [ ] Showcase the actual Part 1 feature, not generic marketing sections
+- [ ] GSAP/Framer Motion animation pass
+- [ ] One deliberate bonus touch (see Bonus Ideas)
 - [ ] Deploy to live URL
 
 ---
 
 ## Part 3 Checklist
-- [ ] Architecture/library choices explained
-- [ ] Design reasoning
-- [ ] AI tool usage documented
+- [ ] Architecture/library choices explained, with trade-offs
+- [ ] Design reasoning for Part 2
+- [ ] AI tool usage documented — what was used for, what was changed/rejected
 - [ ] Improvements noted
+- [ ] API issues/quirks section (docs/API.md's Notes sections are the raw material for this)
 
 ---
 
@@ -173,28 +264,29 @@ compass-chat/
 2. POST `/auth/login`
 3. Store `token` in localStorage
 4. Use token in `Authorization: Bearer {token}` for all requests
-5. On refresh: GET `/auth/me` to restore session
+5. On refresh: GET `/auth/me` to restore session; a 400/`NO_TOKEN` or any failure here means "not logged in," not necessarily "server error"
 
 ---
 
-## Message Flow (Socket.io Real-time)
-1. User sends message via `socket.emit('message:send', {...})`
-2. Server broadcasts via `socket.on('message:new', (message) => {...})`
-3. Append new message to list instantly
-4. Auto-scroll to latest message
-5. If user scrolled up, don't force scroll (respect scroll position)
+## Message Flow (Real-time)
 
-## Fallback: REST API Polling
-1. User sends message POST `/messages`
-2. Poll GET `/conversations/{id}/messages` every 1-2 seconds
-3. Merge new messages (check for duplicates by timestamp)
-4. Append to list and auto-scroll
+**Primary approach: Socket.io** (confirmed working, though undocumented in the Swagger listing):
+1. Connect to the root origin with the auth token in the handshake — no join/subscribe call needed
+2. User sends message via `POST /messages` (not a socket emit — sending is REST-only, confirmed)
+3. Other participants' sockets receive `message:new` — note the payload uses `id` (not `_id`) and an epoch-millisecond `createdAt`, unlike REST responses
+4. Append to list; auto-scroll only if the user hasn't scrolled up
+5. Listen for `conversation:updated` to catch group renames/membership changes live
+
+**Fallback: polling**, if the socket connection can't be established:
+1. Poll `GET /conversations/{id}/messages` on a 1–2 second interval for the open conversation
+2. Merge new messages by `_id` (not timestamp — timestamps aren't guaranteed unique) to avoid duplicates
+3. Poll `GET /conversations` on a longer interval to catch new conversations / updated previews
 
 ---
 
 ## Quick Start Notes
-- All API responses are JSON
-- Errors may not have standard structure (document as found)
-- No pagination params seen yet
-- No rate limiting mentioned
-- CORS enabled (Cloudflare headers visible)
+- All API responses are JSON; errors consistently use `{error: {message, code}}` (see docs/API.md's Error Handling section)
+- Pagination exists on the messages endpoint (`limit`/`before`/`hasMore`) — do use it, don't assume the API is pagination-free
+- No rate limiting observed
+- CORS is open (`access-control-allow-origin: *`)
+- `/health` is a documented no-op (404) — don't build anything that depends on it
