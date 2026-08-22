@@ -94,12 +94,12 @@ const Sidebar = ({
 
   const recentContacts = React.useMemo(() => {
     const seen = new Set<string>()
-    const contacts: User[] = []
+    const contacts: { conversationId: string; user: User }[] = []
     for (const conversation of conversations) {
       const user = getConversationAvatarUser(conversation)
       if (user && !seen.has(user._id)) {
         seen.add(user._id)
-        contacts.push(user)
+        contacts.push({ conversationId: conversation._id, user })
       }
       if (contacts.length >= 6) break
     }
@@ -177,16 +177,18 @@ const Sidebar = ({
             <ConversationAvatar name={currentUser.name} size="lg" ring="primary" />
             <span className="text-xs text-secondary">Me</span>
           </div>
-          {recentContacts.map((user) => (
-            <div
+          {recentContacts.map(({ conversationId, user }) => (
+            <button
               key={user._id}
-              className="flex shrink-0 flex-col items-center gap-1.5"
+              type="button"
+              onClick={() => onSelectConversation(conversationId)}
+              className="flex shrink-0 flex-col items-center gap-1.5 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
               <ConversationAvatar name={user.name} size="lg" ring="accent" />
               <span className="max-w-14 truncate text-xs text-secondary">
                 {user.name.split(' ')[0]}
               </span>
-            </div>
+            </button>
           ))}
         </div>
       )}

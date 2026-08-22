@@ -72,7 +72,7 @@ const MessageBubble = ({
                 ? 'Sending…'
                 : formatMessageTime(message.createdAt)}
           </span>
-          {isOwn && <ReadReceipt seen={message.seen} sending={isSending} />}
+          {isOwn && !isFailed && <ReadReceipt sending={isSending} />}
         </div>
       </div>
     </motion.div>

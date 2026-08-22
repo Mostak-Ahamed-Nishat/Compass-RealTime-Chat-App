@@ -20,7 +20,7 @@ import {
   messages as messagesApi,
 } from '@/lib/api'
 import { connectSocket, disconnectSocket, getSocket } from '@/lib/socket'
-import { getMockPresence, getMockLastSeen, enrichMessagesWithSeenStatus } from '@/lib/mock-presence'
+import { getMockPresence, getMockLastSeen } from '@/lib/mock-presence'
 import { cn } from '@/lib/utils'
 import type {
   Conversation,
@@ -184,10 +184,9 @@ export default function ChatPage() {
       .then((res) => {
         if (cancelled) return
         const messages = (res as MessageListResponse).messages ?? []
-        const enrichedMessages = enrichMessagesWithSeenStatus(messages)
         setMessagesByConversation((prev) => ({
           ...prev,
-          [conversationId]: enrichedMessages,
+          [conversationId]: messages,
         }))
         setMessageLoadState((prev) => ({ ...prev, [conversationId]: 'loaded' }))
       })
@@ -230,8 +229,6 @@ export default function ChatPage() {
         sender: payload.sender,
         text: payload.text,
         createdAt: new Date(payload.createdAt).toISOString(),
-        // Incoming messages from other users are initially not seen
-        seen: false,
       }
       setMessagesByConversation((prev) => {
         const existing = prev[message.conversation] ?? []
@@ -518,7 +515,6 @@ export default function ChatPage() {
       text,
       createdAt: new Date().toISOString(),
       status: 'sending',
-      seen: false,
     }
 
     setMessagesByConversation((prev) => ({

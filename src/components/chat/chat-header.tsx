@@ -47,12 +47,12 @@ const ChatHeader = ({
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold text-gray-900">{name}</p>
           {subtitle && (
-            <p className="flex items-center gap-1.5 truncate text-xs text-secondary">
+            <div className="flex items-center gap-1.5 truncate text-xs text-secondary">
               {conversation.type === 'direct' && isOnline !== undefined && (
                 <PresenceIndicator isOnline={isOnline} className="h-2 w-2" />
               )}
               <span className="truncate">{subtitle}</span>
-            </p>
+            </div>
           )}
         </div>
       </div>

@@ -16,8 +16,6 @@ export interface Message {
   createdAt: string
   // Client-only, set while an optimistic send is in flight or has failed.
   status?: 'sending' | 'failed'
-  // Client-only: read receipt status. In a real app, would come from API.
-  seen?: boolean
 }
 
 export interface ConversationDirect {
