@@ -1,19 +1,30 @@
 import type { Conversation, User } from '@/types'
 
+// Defensive: at least one endpoint (POST /conversations) has been observed
+// returning a lean/partial document (raw participant id strings, no `type`,
+// no `lastMessage`) instead of the enriched shape GET /conversations uses —
+// undocumented, and socket payloads aren't guaranteed to match either. These
+// helpers must degrade gracefully rather than throw when a field is missing.
 export function getConversationName(conversation: Conversation): string {
-  return conversation.type === 'direct'
-    ? conversation.participant.name
-    : conversation.name
+  if (conversation.type === 'direct') {
+    return conversation.participant?.name ?? 'Unknown'
+  }
+  return conversation.name ?? 'Unnamed group'
 }
 
 export function getConversationAvatarUser(conversation: Conversation): User | null {
-  return conversation.type === 'direct' ? conversation.participant : null
+  return conversation.type === 'direct'
+    ? conversation.participant ?? null
+    : null
 }
 
 export function getSenderName(conversation: Conversation, senderId: string): string {
-  if (conversation.type === 'direct') return conversation.participant.name
+  if (conversation.type === 'direct') {
+    return conversation.participant?.name ?? 'Unknown'
+  }
   return (
-    conversation.participants.find((p) => p._id === senderId)?.name ?? 'Unknown'
+    conversation.participants?.find((p) => p._id === senderId)?.name ??
+    'Unknown'
   )
 }
 

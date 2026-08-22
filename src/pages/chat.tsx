@@ -57,12 +57,20 @@ export default function ChatPage() {
   const [mutedConversationIds, setMutedConversationIds] = useState<Set<string>>(
     () => new Set()
   )
+  const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({})
   const [nicknames, setNicknames] = useState<Record<string, string>>({})
   const [accentColors, setAccentColors] = useState<Record<string, string>>({})
   const [quickEmojis, setQuickEmojis] = useState<Record<string, string>>({})
   const typingTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(
     null
   )
+  // handleNewMessage lives inside an effect keyed only on currentUser._id, so
+  // it would otherwise close over a stale selectedConversationId — this ref
+  // always has the current value.
+  const selectedConversationIdRef = React.useRef<string | null>(null)
+  useEffect(() => {
+    selectedConversationIdRef.current = selectedConversationId
+  }, [selectedConversationId])
   const reduceMotion = useReducedMotion()
 
   useEffect(() => {
@@ -104,11 +112,17 @@ export default function ChatPage() {
   }, [conversations, selectedConversationId])
 
   // Fetch each conversation's history the first time it's opened, and cache it.
+  // Gated by a ref (not the `messageLoadState` it writes to) — depending on
+  // that state here would re-run this effect the instant it calls
+  // setMessageLoadState, and the resulting cleanup would cancel the very
+  // fetch it just started before it ever resolved.
+  const requestedMessageConversationsRef = React.useRef<Set<string>>(new Set())
+
   useEffect(() => {
     if (!selectedConversationId) return
     const conversationId = selectedConversationId
-    const state = messageLoadState[conversationId]
-    if (state === 'loading' || state === 'loaded') return
+    if (requestedMessageConversationsRef.current.has(conversationId)) return
+    requestedMessageConversationsRef.current.add(conversationId)
 
     let cancelled = false
     setMessageLoadState((prev) => ({ ...prev, [conversationId]: 'loading' }))
@@ -124,6 +138,7 @@ export default function ChatPage() {
       })
       .catch((err) => {
         if (cancelled) return
+        requestedMessageConversationsRef.current.delete(conversationId)
         setMessageLoadErrors((prev) => ({
           ...prev,
           [conversationId]: err?.error?.message || 'Failed to load messages',
@@ -133,7 +148,7 @@ export default function ChatPage() {
     return () => {
       cancelled = true
     }
-  }, [selectedConversationId, messageLoadState])
+  }, [selectedConversationId])
 
   // Real-time: connect once per session and listen for events from OTHER
   // participants. `message:new` and `conversation:updated` are confirmed
@@ -169,6 +184,13 @@ export default function ChatPage() {
       setTypingConversationId((current) =>
         current === message.conversation ? null : current
       )
+      // Only badge conversations you aren't currently looking at.
+      if (message.conversation !== selectedConversationIdRef.current) {
+        setUnreadCounts((prev) => ({
+          ...prev,
+          [message.conversation]: (prev[message.conversation] ?? 0) + 1,
+        }))
+      }
     }
 
     const handleConversationUpdated = (payload: Conversation) => {
@@ -224,21 +246,28 @@ export default function ChatPage() {
     setIsDetailsOpen(false)
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)
     setTypingConversationId(null)
+    setUnreadCounts((prev) => {
+      if (!prev[id]) return prev
+      const next = { ...prev }
+      delete next[id]
+      return next
+    })
   }
 
   const handleSelectUserForNewChat = async (user: User) => {
     if (!currentUser) return
     setStartingUserId(user._id)
     try {
-      const conversation = (await conversationsApi.startDirect(
-        user._id
-      )) as Conversation
-      setConversations((prev) =>
-        prev.some((c) => c._id === conversation._id)
-          ? prev
-          : [conversation, ...prev]
-      )
-      handleSelectConversation(conversation._id)
+      // POST /conversations returns a raw document (id-only `participants`,
+      // no `type`) rather than the enriched shape the rest of the app
+      // expects — re-fetch the list to get something renderable, per
+      // docs/API.md's note on this endpoint.
+      const created = (await conversationsApi.startDirect(user._id)) as {
+        _id: string
+      }
+      const res = (await conversationsApi.list()) as ConversationsResponse
+      setConversations(res.data ?? [])
+      handleSelectConversation(created._id)
       setIsNewChatOpen(false)
     } catch (err: any) {
       setConversationsError(
@@ -340,6 +369,21 @@ export default function ChatPage() {
         ...response,
         status: undefined,
       }))
+      setConversations((prev) =>
+        prev.map((c) =>
+          c._id === conversationId
+            ? {
+                ...c,
+                lastMessage: {
+                  text: response.text,
+                  sender: response.sender,
+                  createdAt: response.createdAt,
+                },
+                updatedAt: response.createdAt,
+              }
+            : c
+        )
+      )
     } catch {
       setMessageInConversation(conversationId, tempId, (m) => ({
         ...m,
@@ -382,9 +426,12 @@ export default function ChatPage() {
             onSelectConversation={handleSelectConversation}
             onLogout={handleLogout}
             onNewChat={() => setIsNewChatOpen(true)}
+            onStartUserChat={handleSelectUserForNewChat}
+            startingUserId={startingUserId}
             isLoading={conversationsLoading}
             loadError={conversationsError}
             mutedConversationIds={mutedConversationIds}
+            unreadCounts={unreadCounts}
             nicknames={nicknames}
           />
           <MobileTabBar

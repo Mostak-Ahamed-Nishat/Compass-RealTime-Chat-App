@@ -6,10 +6,9 @@ import dynamic from 'next/dynamic'
 import { Smile } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-const EmojiPicker = dynamic(
-  () => import('emoji-picker-react').then((mod) => mod.EmojiPicker),
-  { ssr: false }
-)
+const EmojiPicker = dynamic(() => import('emoji-picker-react'), {
+  ssr: false,
+})
 
 interface EmojiPickerComponentProps {
   onEmojiSelect: (emoji: string) => void
@@ -83,7 +82,7 @@ const EmojiPickerComponent = React.forwardRef<
               width={320}
               height={400}
               previewConfig={{ showPreview: false }}
-              skinTonePickerLocation="NONE"
+              skinTonesDisabled
             />
           </Suspense>
         </div>

@@ -10,6 +10,7 @@ import {
 } from '@/components/ui'
 import { cn } from '@/lib/utils'
 import { getConversationAvatarUser, getConversationName } from '@/lib/conversation'
+import { users as usersApi } from '@/lib/api'
 import { ConversationAvatar } from './conversation-avatar'
 import { ConversationListItem } from './conversation-list-item'
 import type { Conversation, User } from '@/types'
@@ -21,10 +22,14 @@ export interface SidebarProps {
   onSelectConversation: (id: string) => void
   onLogout: () => void
   onNewChat?: () => void
+  onNewGroup?: () => void
+  onStartUserChat?: (user: User) => void
+  startingUserId?: string | null
   isLoading?: boolean
   loadError?: string | null
   mutedConversationIds?: Set<string>
   nicknames?: Record<string, string>
+  unreadCounts?: Record<string, number>
   className?: string
 }
 
@@ -35,21 +40,56 @@ const Sidebar = ({
   onSelectConversation,
   onLogout,
   onNewChat,
+  onStartUserChat,
+  startingUserId,
   isLoading = false,
   loadError = null,
   mutedConversationIds,
   nicknames,
+  unreadCounts,
   className,
 }: SidebarProps) => {
   const [query, setQuery] = React.useState('')
+  const [userResults, setUserResults] = React.useState<User[]>([])
+  const [isSearchingUsers, setIsSearchingUsers] = React.useState(false)
 
   const filteredConversations = React.useMemo(() => {
-    if (!query.trim()) return conversations
     const q = query.trim().toLowerCase()
-    return conversations.filter((c) =>
-      getConversationName(c).toLowerCase().includes(q)
-    )
+    if (!q) return conversations
+    return conversations.filter((c) => {
+      if (getConversationName(c).toLowerCase().includes(q)) return true
+      if (c.type === 'direct') {
+        return c.participant?.phone?.toLowerCase().includes(q) ?? false
+      }
+      return (
+        c.participants?.some(
+          (p) =>
+            p.name?.toLowerCase().includes(q) ||
+            p.phone?.toLowerCase().includes(q)
+        ) ?? false
+      )
+    })
   }, [conversations, query])
+
+  // Search the API for people too, not just local conversations — so
+  // "search or start new chat" actually finds someone you haven't messaged yet.
+  React.useEffect(() => {
+    const q = query.trim()
+    if (q.length < 2) {
+      setUserResults([])
+      setIsSearchingUsers(false)
+      return
+    }
+    setIsSearchingUsers(true)
+    const timeout = setTimeout(() => {
+      usersApi
+        .search(q)
+        .then((res) => setUserResults((res as User[]) ?? []))
+        .catch(() => setUserResults([]))
+        .finally(() => setIsSearchingUsers(false))
+    }, 300)
+    return () => clearTimeout(timeout)
+  }, [query])
 
   const recentContacts = React.useMemo(() => {
     const seen = new Set<string>()
@@ -114,7 +154,7 @@ const Sidebar = ({
       </div>
 
       {recentContacts.length > 0 && (
-        <div className="flex gap-4 overflow-x-auto px-4 pb-5 pt-1">
+        <div className="no-scrollbar flex gap-4 overflow-x-auto px-4 pb-5 pt-2">
           <div className="flex shrink-0 flex-col items-center gap-1.5">
             <ConversationAvatar name={currentUser.name} size="lg" ring="primary" />
             <span className="text-xs text-secondary">Me</span>
@@ -168,9 +208,54 @@ const Sidebar = ({
               isActive={conversation._id === selectedConversationId}
               muted={mutedConversationIds?.has(conversation._id)}
               nickname={nicknames?.[conversation._id]}
+              unreadCount={unreadCounts?.[conversation._id] ?? 0}
               onClick={() => onSelectConversation(conversation._id)}
             />
           ))
+        )}
+
+        {query.trim().length >= 2 && (
+          <div className="border-t border-gray-100 py-2">
+            <p className="px-4 pb-1 text-xs font-semibold uppercase tracking-wide text-secondary">
+              People
+            </p>
+            {isSearchingUsers ? (
+              <p className="px-4 py-3 text-center text-sm text-secondary">
+                Searching…
+              </p>
+            ) : userResults.length === 0 ? (
+              <p className="px-4 py-3 text-center text-sm text-secondary">
+                No users found
+              </p>
+            ) : (
+              userResults
+                .filter((user) => user._id !== currentUser._id)
+                .map((user) => (
+                  <button
+                    key={user._id}
+                    type="button"
+                    onClick={() => onStartUserChat?.(user)}
+                    disabled={startingUserId === user._id}
+                    className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-gray-50 disabled:opacity-60"
+                  >
+                    <ConversationAvatar name={user.name} size="sm" />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold text-gray-900">
+                        {user.name}
+                      </p>
+                      <p className="truncate text-xs text-secondary">
+                        {user.phone}
+                      </p>
+                    </div>
+                    {startingUserId === user._id && (
+                      <span className="shrink-0 text-xs text-secondary">
+                        Starting…
+                      </span>
+                    )}
+                  </button>
+                ))
+            )}
+          </div>
         )}
       </div>
 

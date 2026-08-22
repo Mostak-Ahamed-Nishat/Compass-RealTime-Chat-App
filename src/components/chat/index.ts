@@ -33,3 +33,7 @@ export {
   NewChatDialog,
   type NewChatDialogProps,
 } from './new-chat-dialog'
+export {
+  NewGroupDialog,
+  type NewGroupDialogProps,
+} from './new-group-dialog'

@@ -29,7 +29,9 @@ const ConversationListItem = ({
   const name = nickname || getConversationName(conversation)
   const subtitle = getConversationSubtitle(conversation)
   const timestamp = formatRelativeTime(
-    'text' in conversation.lastMessage && conversation.lastMessage.text
+    conversation.lastMessage &&
+    'text' in conversation.lastMessage &&
+    conversation.lastMessage.text
       ? conversation.lastMessage.createdAt
       : conversation.updatedAt
   )

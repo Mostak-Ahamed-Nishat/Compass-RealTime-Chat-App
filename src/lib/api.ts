@@ -43,8 +43,41 @@ export const auth = {
   me: () => apiCall('/auth/me'),
 }
 
+// The live API's /users/search is case-sensitive AND prefix-only — confirmed
+// directly against the server: "Nishat"/"Nish" match a user named "Nishat",
+// but "nishat"/"nish" (lowercase) return nothing, and even a correctly-cased
+// mid-string substring like "isha" matches nothing. Since that's a backend
+// limitation we can't fix, query the common case variants of what the user
+// typed in parallel and merge the results so search feels case-insensitive.
+function getCaseVariants(q: string): string[] {
+  const trimmed = q.trim()
+  return Array.from(
+    new Set([
+      trimmed,
+      trimmed.toLowerCase(),
+      trimmed.toUpperCase(),
+      trimmed.charAt(0).toUpperCase() + trimmed.slice(1).toLowerCase(),
+    ])
+  )
+}
+
 export const users = {
-  search: (q: string) => apiCall(`/users/search?q=${encodeURIComponent(q)}`),
+  search: async (q: string) => {
+    const results = await Promise.all(
+      getCaseVariants(q).map((variant) =>
+        apiCall<any[]>(`/users/search?q=${encodeURIComponent(variant)}`).catch(
+          () => []
+        )
+      )
+    )
+    const merged = new Map<string, any>()
+    for (const list of results) {
+      for (const user of list ?? []) {
+        merged.set(user._id, user)
+      }
+    }
+    return Array.from(merged.values())
+  },
 }
 
 export const conversations = {
