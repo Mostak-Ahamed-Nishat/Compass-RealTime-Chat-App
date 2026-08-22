@@ -7,12 +7,18 @@ import type { Conversation } from '@/types'
 
 export interface ChatHeaderProps {
   conversation: Conversation
+  nickname?: string
   onToggleDetails?: () => void
   onBack?: () => void
 }
 
-const ChatHeader = ({ conversation, onToggleDetails, onBack }: ChatHeaderProps) => {
-  const name = getConversationName(conversation)
+const ChatHeader = ({
+  conversation,
+  nickname,
+  onToggleDetails,
+  onBack,
+}: ChatHeaderProps) => {
+  const name = nickname || getConversationName(conversation)
   const subtitle =
     conversation.type === 'group'
       ? `${conversation.participants.length} members`

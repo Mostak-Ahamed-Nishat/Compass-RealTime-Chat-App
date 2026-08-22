@@ -29,3 +29,7 @@ export {
   TypingIndicator,
   type TypingIndicatorProps,
 } from './typing-indicator'
+export {
+  NewChatDialog,
+  type NewChatDialogProps,
+} from './new-chat-dialog'

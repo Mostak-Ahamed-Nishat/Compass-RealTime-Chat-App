@@ -15,6 +15,9 @@ export interface MessageListProps {
   currentUserId: string
   isOtherTyping?: boolean
   typingUserName?: string
+  isLoading?: boolean
+  loadError?: string | null
+  accentColor?: string
   className?: string
 }
 
@@ -24,6 +27,9 @@ const MessageList = ({
   currentUserId,
   isOtherTyping = false,
   typingUserName,
+  isLoading = false,
+  loadError = null,
+  accentColor,
   className,
 }: MessageListProps) => {
   const bottomRef = React.useRef<HTMLDivElement>(null)
@@ -31,6 +37,32 @@ const MessageList = ({
   React.useEffect(() => {
     bottomRef.current?.scrollIntoView({ block: 'end' })
   }, [messages.length, isOtherTyping])
+
+  if (isLoading) {
+    return (
+      <div
+        className={cn(
+          'flex flex-1 items-center justify-center bg-gray-50',
+          className
+        )}
+      >
+        <p className="text-sm text-secondary">Loading messages…</p>
+      </div>
+    )
+  }
+
+  if (loadError) {
+    return (
+      <div
+        className={cn(
+          'flex flex-1 items-center justify-center bg-gray-50 px-6 text-center',
+          className
+        )}
+      >
+        <p className="text-sm text-red-500">{loadError}</p>
+      </div>
+    )
+  }
 
   if (messages.length === 0 && !isOtherTyping) {
     return <EmptyConversation conversation={conversation} className={className} />
@@ -56,6 +88,7 @@ const MessageList = ({
                 senderName={
                   isOwn ? undefined : getSenderName(conversation, message.sender)
                 }
+                accentColor={accentColor}
               />
             )
           })}

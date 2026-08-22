@@ -41,3 +41,29 @@ export function groupMessagesByDay(messages: Message[]): MessageDayGroup[] {
 
   return groups
 }
+
+const URL_PATTERN = /\bhttps?:\/\/[^\s<>"')]+/gi
+
+export interface MessageLink {
+  url: string
+  messageId: string
+  text: string
+  createdAt: string
+}
+
+export function extractLinks(messages: Message[]): MessageLink[] {
+  const links: MessageLink[] = []
+  for (const message of messages) {
+    const matches = message.text.match(URL_PATTERN)
+    if (!matches) continue
+    for (const url of matches) {
+      links.push({
+        url,
+        messageId: message._id,
+        text: message.text,
+        createdAt: message.createdAt,
+      })
+    }
+  }
+  return links
+}

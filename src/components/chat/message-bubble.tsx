@@ -9,9 +9,15 @@ export interface MessageBubbleProps {
   message: Message
   isOwn: boolean
   senderName?: string
+  accentColor?: string
 }
 
-const MessageBubble = ({ message, isOwn, senderName }: MessageBubbleProps) => {
+const MessageBubble = ({
+  message,
+  isOwn,
+  senderName,
+  accentColor,
+}: MessageBubbleProps) => {
   const shouldReduceMotion = useReducedMotion()
   const isFailed = message.status === 'failed'
   const isSending = message.status === 'sending'
@@ -40,6 +46,7 @@ const MessageBubble = ({ message, isOwn, senderName }: MessageBubbleProps) => {
           </span>
         )}
         <div
+          style={isOwn && accentColor && !isFailed ? { backgroundColor: accentColor } : undefined}
           className={cn(
             'whitespace-pre-wrap break-words rounded-2xl px-4 py-2 text-sm leading-relaxed',
             isOwn

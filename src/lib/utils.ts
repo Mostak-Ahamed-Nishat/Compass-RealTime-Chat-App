@@ -13,3 +13,13 @@ export function getInitials(name: string): string {
     .map((part) => part[0]?.toUpperCase())
     .join('')
 }
+
+export function slugifyHandle(name: string): string {
+  return name
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, '')
+    .split(/\s+/)
+    .filter(Boolean)
+    .join('.')
+}

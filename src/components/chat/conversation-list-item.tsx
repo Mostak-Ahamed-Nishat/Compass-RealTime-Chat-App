@@ -14,6 +14,7 @@ export interface ConversationListItemProps {
   isActive?: boolean
   unreadCount?: number
   muted?: boolean
+  nickname?: string
   onClick?: () => void
 }
 
@@ -22,9 +23,10 @@ const ConversationListItem = ({
   isActive = false,
   unreadCount = 0,
   muted = false,
+  nickname,
   onClick,
 }: ConversationListItemProps) => {
-  const name = getConversationName(conversation)
+  const name = nickname || getConversationName(conversation)
   const subtitle = getConversationSubtitle(conversation)
   const timestamp = formatRelativeTime(
     'text' in conversation.lastMessage && conversation.lastMessage.text

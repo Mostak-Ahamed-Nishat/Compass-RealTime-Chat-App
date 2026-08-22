@@ -5,13 +5,19 @@ import { cn } from '@/lib/utils'
 
 export interface ComposerProps {
   onSend: (text: string) => void
+  onTyping?: () => void
   disabled?: boolean
   className?: string
 }
 
 const MAX_TEXTAREA_HEIGHT = 120
 
-const Composer = ({ onSend, disabled = false, className }: ComposerProps) => {
+const Composer = ({
+  onSend,
+  onTyping,
+  disabled = false,
+  className,
+}: ComposerProps) => {
   const [value, setValue] = React.useState('')
   const textareaRef = React.useRef<HTMLTextAreaElement>(null)
 
@@ -28,6 +34,11 @@ const Composer = ({ onSend, disabled = false, className }: ComposerProps) => {
     if (!canSend) return
     onSend(value.trim())
     setValue('')
+  }
+
+  const handleChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setValue(event.target.value)
+    if (event.target.value.trim().length > 0) onTyping?.()
   }
 
   const handleEmojiSelect = (emoji: string) => {
@@ -63,7 +74,7 @@ const Composer = ({ onSend, disabled = false, className }: ComposerProps) => {
         <textarea
           ref={textareaRef}
           value={value}
-          onChange={(event) => setValue(event.target.value)}
+          onChange={handleChange}
           onKeyDown={handleKeyDown}
           placeholder="Type a message"
           rows={1}

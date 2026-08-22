@@ -20,6 +20,11 @@ export interface SidebarProps {
   selectedConversationId: string | null
   onSelectConversation: (id: string) => void
   onLogout: () => void
+  onNewChat?: () => void
+  isLoading?: boolean
+  loadError?: string | null
+  mutedConversationIds?: Set<string>
+  nicknames?: Record<string, string>
   className?: string
 }
 
@@ -29,6 +34,11 @@ const Sidebar = ({
   selectedConversationId,
   onSelectConversation,
   onLogout,
+  onNewChat,
+  isLoading = false,
+  loadError = null,
+  mutedConversationIds,
+  nicknames,
   className,
 }: SidebarProps) => {
   const [query, setQuery] = React.useState('')
@@ -131,13 +141,24 @@ const Sidebar = ({
           icon={<Plus className="h-4 w-4" />}
           label="Start new chat"
           size="sm"
+          onClick={onNewChat}
         />
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        {filteredConversations.length === 0 ? (
+        {isLoading ? (
           <p className="px-4 py-8 text-center text-sm text-secondary">
-            No conversations found
+            Loading conversations…
+          </p>
+        ) : loadError ? (
+          <p className="px-4 py-8 text-center text-sm text-red-500">
+            {loadError}
+          </p>
+        ) : filteredConversations.length === 0 ? (
+          <p className="px-4 py-8 text-center text-sm text-secondary">
+            {query.trim()
+              ? 'No conversations found'
+              : 'No conversations yet — start a new chat'}
           </p>
         ) : (
           filteredConversations.map((conversation) => (
@@ -145,6 +166,8 @@ const Sidebar = ({
               key={conversation._id}
               conversation={conversation}
               isActive={conversation._id === selectedConversationId}
+              muted={mutedConversationIds?.has(conversation._id)}
+              nickname={nicknames?.[conversation._id]}
               onClick={() => onSelectConversation(conversation._id)}
             />
           ))

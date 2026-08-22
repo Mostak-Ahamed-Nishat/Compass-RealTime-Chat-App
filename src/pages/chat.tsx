@@ -1,6 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
+import { MessageSquare } from 'lucide-react'
 import { AuthContext } from './_app'
 import {
   Sidebar,
@@ -9,62 +10,56 @@ import {
   Composer,
   MessageList,
   MobileTabBar,
+  NewChatDialog,
 } from '@/components/chat'
 import { auth as tokenStore } from '@/lib/auth'
-import { messages as messagesApi } from '@/lib/api'
+import {
+  conversations as conversationsApi,
+  messages as messagesApi,
+} from '@/lib/api'
+import { connectSocket, disconnectSocket, getSocket } from '@/lib/socket'
 import { cn } from '@/lib/utils'
-import type { Conversation, Message } from '@/types'
-
-// Placeholder data for the sidebar/header layout until GET /conversations is wired up.
-const MOCK_CONVERSATIONS: Conversation[] = [
-  {
-    _id: 'c1',
-    type: 'direct',
-    participant: { _id: 'u1', name: 'Priya Sharma', phone: '+1 415 555 0101' },
-    lastMessage: {
-      text: 'Just landed in Bali!',
-      sender: 'u1',
-      createdAt: new Date(Date.now() - 8 * 60000).toISOString(),
-    },
-    updatedAt: new Date(Date.now() - 8 * 60000).toISOString(),
-  },
-  {
-    _id: 'c2',
-    type: 'direct',
-    participant: { _id: 'u2', name: 'James Carter', phone: '+1 415 555 0102' },
-    lastMessage: {},
-    updatedAt: new Date(Date.now() - 11 * 3600000).toISOString(),
-  },
-  {
-    _id: 'c3',
-    type: 'group',
-    name: 'Friendly Group',
-    createdBy: 'u1',
-    admins: ['u1'],
-    participants: [
-      { _id: 'u1', name: 'Priya Sharma', phone: '+1 415 555 0101' },
-      { _id: 'u2', name: 'James Carter', phone: '+1 415 555 0102' },
-      { _id: 'u3', name: 'Sofia Reyes', phone: '+1 415 555 0103' },
-    ],
-    lastMessage: {},
-    updatedAt: new Date(Date.now() - 50 * 60000).toISOString(),
-  },
-]
+import type {
+  Conversation,
+  ConversationsResponse,
+  Message,
+  MessageListResponse,
+  User,
+} from '@/types'
 
 export default function ChatPage() {
   const router = useRouter()
-  const { currentUser, isLoading } = useContext(AuthContext)
+  const { currentUser, isLoading, setCurrentUser } = useContext(AuthContext)
+  const [conversations, setConversations] = useState<Conversation[]>([])
+  const [conversationsLoading, setConversationsLoading] = useState(true)
+  const [conversationsError, setConversationsError] = useState<string | null>(
+    null
+  )
   const [selectedConversationId, setSelectedConversationId] = useState<
     string | null
-  >(MOCK_CONVERSATIONS[0]?._id ?? null)
+  >(null)
   const [mobileView, setMobileView] = useState<'list' | 'thread'>('list')
   const [isDetailsOpen, setIsDetailsOpen] = useState(false)
+  const [isNewChatOpen, setIsNewChatOpen] = useState(false)
+  const [startingUserId, setStartingUserId] = useState<string | null>(null)
   const [messagesByConversation, setMessagesByConversation] = useState<
     Record<string, Message[]>
+  >({})
+  const [messageLoadState, setMessageLoadState] = useState<
+    Record<string, 'loading' | 'loaded' | 'error'>
+  >({})
+  const [messageLoadErrors, setMessageLoadErrors] = useState<
+    Record<string, string>
   >({})
   const [typingConversationId, setTypingConversationId] = useState<
     string | null
   >(null)
+  const [mutedConversationIds, setMutedConversationIds] = useState<Set<string>>(
+    () => new Set()
+  )
+  const [nicknames, setNicknames] = useState<Record<string, string>>({})
+  const [accentColors, setAccentColors] = useState<Record<string, string>>({})
+  const [quickEmojis, setQuickEmojis] = useState<Record<string, string>>({})
   const typingTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(
     null
   )
@@ -76,74 +71,150 @@ export default function ChatPage() {
     }
   }, [isLoading, currentUser, router])
 
-  // Seed a bit of placeholder history so the bubble/empty-state design is visible.
-  // Replace with real GET /conversations/{id}/messages once that's wired up.
   useEffect(() => {
     if (!currentUser?._id) return
-    setMessagesByConversation((prev) => {
-      if (Object.keys(prev).length > 0) return prev
-      const now = Date.now()
-      return {
-        c1: [
-          {
-            _id: 'm1',
-            conversation: 'c1',
-            sender: 'u1',
-            text: 'Hey! How have you been?',
-            createdAt: new Date(now - 3600_000).toISOString(),
-          },
-          {
-            _id: 'm2',
-            conversation: 'c1',
-            sender: currentUser._id,
-            text: 'Good! Just been super busy with work.',
-            createdAt: new Date(now - 3500_000).toISOString(),
-          },
-          {
-            _id: 'm3',
-            conversation: 'c1',
-            sender: 'u1',
-            text: 'It was a great vacation, I was in Paris',
-            createdAt: new Date(now - 1200_000).toISOString(),
-          },
-          {
-            _id: 'm4',
-            conversation: 'c1',
-            sender: currentUser._id,
-            text: 'Wow!! I hope you brought us gifts',
-            createdAt: new Date(now - 900_000).toISOString(),
-          },
-          {
-            _id: 'm5',
-            conversation: 'c1',
-            sender: 'u1',
-            text: 'Just landed in Bali!',
-            createdAt: new Date(now - 8 * 60000).toISOString(),
-          },
-        ],
-        c2: [],
-        c3: [
-          {
-            _id: 'm6',
-            conversation: 'c3',
-            sender: 'u2',
-            text: 'Anyone free this weekend?',
-            createdAt: new Date(now - 55 * 60000).toISOString(),
-          },
-          {
-            _id: 'm7',
-            conversation: 'c3',
-            sender: 'u3',
-            text: 'I might be! Let me check.',
-            createdAt: new Date(now - 50 * 60000).toISOString(),
-          },
-        ],
+    let cancelled = false
+    setConversationsLoading(true)
+    conversationsApi
+      .list()
+      .then((res) => {
+        if (cancelled) return
+        setConversations((res as ConversationsResponse).data ?? [])
+        setConversationsError(null)
+      })
+      .catch((err) => {
+        if (cancelled) return
+        setConversationsError(
+          err?.error?.message || 'Failed to load conversations'
+        )
+      })
+      .finally(() => {
+        if (!cancelled) setConversationsLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [currentUser?._id])
+
+  // Auto-select the first conversation once the list loads, if none is selected yet.
+  useEffect(() => {
+    if (!selectedConversationId && conversations.length > 0) {
+      setSelectedConversationId(conversations[0]._id)
+    }
+  }, [conversations, selectedConversationId])
+
+  // Fetch each conversation's history the first time it's opened, and cache it.
+  useEffect(() => {
+    if (!selectedConversationId) return
+    const conversationId = selectedConversationId
+    const state = messageLoadState[conversationId]
+    if (state === 'loading' || state === 'loaded') return
+
+    let cancelled = false
+    setMessageLoadState((prev) => ({ ...prev, [conversationId]: 'loading' }))
+    conversationsApi
+      .getMessages(conversationId)
+      .then((res) => {
+        if (cancelled) return
+        setMessagesByConversation((prev) => ({
+          ...prev,
+          [conversationId]: (res as MessageListResponse).messages ?? [],
+        }))
+        setMessageLoadState((prev) => ({ ...prev, [conversationId]: 'loaded' }))
+      })
+      .catch((err) => {
+        if (cancelled) return
+        setMessageLoadErrors((prev) => ({
+          ...prev,
+          [conversationId]: err?.error?.message || 'Failed to load messages',
+        }))
+        setMessageLoadState((prev) => ({ ...prev, [conversationId]: 'error' }))
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [selectedConversationId, messageLoadState])
+
+  // Real-time: connect once per session and listen for events from OTHER
+  // participants. `message:new` and `conversation:updated` are confirmed
+  // working; `typing` is inferred by analogy (same relay pattern) and isn't
+  // documented, so it's best-effort.
+  useEffect(() => {
+    if (!currentUser?._id) return
+    const token = tokenStore.getToken()
+    if (!token) return
+    const socket = connectSocket(token)
+    const userId = currentUser._id
+
+    const handleNewMessage = (payload: {
+      id: string
+      conversation: string
+      sender: string
+      text: string
+      createdAt: number
+    }) => {
+      if (!payload?.conversation || payload.sender === userId) return
+      const message: Message = {
+        _id: payload.id,
+        conversation: payload.conversation,
+        sender: payload.sender,
+        text: payload.text,
+        createdAt: new Date(payload.createdAt).toISOString(),
       }
-    })
+      setMessagesByConversation((prev) => {
+        const existing = prev[message.conversation] ?? []
+        if (existing.some((m) => m._id === message._id)) return prev
+        return { ...prev, [message.conversation]: [...existing, message] }
+      })
+      setTypingConversationId((current) =>
+        current === message.conversation ? null : current
+      )
+    }
+
+    const handleConversationUpdated = (payload: Conversation) => {
+      if (!payload?._id) return
+      setConversations((prev) =>
+        prev.some((c) => c._id === payload._id)
+          ? prev.map((c) => (c._id === payload._id ? payload : c))
+          : [payload, ...prev]
+      )
+    }
+
+    // Only ever fires for OTHER users typing — this client emits its own
+    // typing state (see handleTyping) instead of setting it locally.
+    const handleTypingEvent = (payload: {
+      conversationId?: string
+      userId?: string
+    }) => {
+      if (!payload?.conversationId || payload.userId === userId) return
+      const conversationId = payload.conversationId
+      setTypingConversationId(conversationId)
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)
+      typingTimeoutRef.current = setTimeout(() => {
+        setTypingConversationId((current) =>
+          current === conversationId ? null : current
+        )
+      }, 3000)
+    }
+
+    socket.on('message:new', handleNewMessage)
+    socket.on('conversation:updated', handleConversationUpdated)
+    socket.on('typing', handleTypingEvent)
+
+    return () => {
+      socket.off('message:new', handleNewMessage)
+      socket.off('conversation:updated', handleConversationUpdated)
+      socket.off('typing', handleTypingEvent)
+    }
   }, [currentUser?._id])
 
   const handleLogout = () => {
+    disconnectSocket()
     tokenStore.clearToken()
+    // AuthContext isn't remounted on client-side navigation, so the stale
+    // currentUser must be cleared explicitly — otherwise index.tsx's
+    // "already logged in" redirect immediately bounces back into /chat.
+    setCurrentUser(null)
     router.push('/')
   }
 
@@ -153,6 +224,73 @@ export default function ChatPage() {
     setIsDetailsOpen(false)
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)
     setTypingConversationId(null)
+  }
+
+  const handleSelectUserForNewChat = async (user: User) => {
+    if (!currentUser) return
+    setStartingUserId(user._id)
+    try {
+      const conversation = (await conversationsApi.startDirect(
+        user._id
+      )) as Conversation
+      setConversations((prev) =>
+        prev.some((c) => c._id === conversation._id)
+          ? prev
+          : [conversation, ...prev]
+      )
+      handleSelectConversation(conversation._id)
+      setIsNewChatOpen(false)
+    } catch (err: any) {
+      setConversationsError(
+        err?.error?.message || 'Failed to start conversation'
+      )
+    } finally {
+      setStartingUserId(null)
+    }
+  }
+
+  // This side only EMITS typing — it never sets local state from its own
+  // keystrokes. The indicator only ever renders from a `typing` event this
+  // client RECEIVES from someone else's socket (see the listener above).
+  const handleTyping = () => {
+    if (!selectedConversationId) return
+    getSocket()?.emit('typing', { conversationId: selectedConversationId })
+  }
+
+  const handleToggleMute = (conversationId: string) => {
+    setMutedConversationIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(conversationId)) next.delete(conversationId)
+      else next.add(conversationId)
+      return next
+    })
+  }
+
+  const handleSetNickname = (conversationId: string, nickname?: string) => {
+    setNicknames((prev) => {
+      const next = { ...prev }
+      if (nickname) next[conversationId] = nickname
+      else delete next[conversationId]
+      return next
+    })
+  }
+
+  const handleSetAccentColor = (conversationId: string, color?: string) => {
+    setAccentColors((prev) => {
+      const next = { ...prev }
+      if (color) next[conversationId] = color
+      else delete next[conversationId]
+      return next
+    })
+  }
+
+  const handleSetQuickEmoji = (conversationId: string, emoji?: string) => {
+    setQuickEmojis((prev) => {
+      const next = { ...prev }
+      if (emoji) next[conversationId] = emoji
+      else delete next[conversationId]
+      return next
+    })
   }
 
   const setMessageInConversation = (
@@ -186,17 +324,6 @@ export default function ChatPage() {
       ...prev,
       [conversationId]: [...(prev[conversationId] ?? []), optimisticMessage],
     }))
-
-    // Demo only: there's no confirmed socket "typing" event from the API yet,
-    // so this simulates the other side typing back to show the indicator.
-    // Replace with a real `typing` socket listener once that's confirmed.
-    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)
-    setTypingConversationId(conversationId)
-    typingTimeoutRef.current = setTimeout(() => {
-      setTypingConversationId((current) =>
-        current === conversationId ? null : current
-      )
-    }, 1800)
 
     try {
       const response = (await messagesApi.send(conversationId, text)) as
@@ -232,9 +359,12 @@ export default function ChatPage() {
     )
   }
 
-  const selectedConversation = MOCK_CONVERSATIONS.find(
+  const selectedConversation = conversations.find(
     (c) => c._id === selectedConversationId
   )
+  const selectedMessageState = selectedConversationId
+    ? messageLoadState[selectedConversationId]
+    : undefined
 
   return (
     <div className="flex h-screen overflow-hidden bg-white">
@@ -247,10 +377,15 @@ export default function ChatPage() {
         >
           <Sidebar
             currentUser={currentUser}
-            conversations={MOCK_CONVERSATIONS}
+            conversations={conversations}
             selectedConversationId={selectedConversationId}
             onSelectConversation={handleSelectConversation}
             onLogout={handleLogout}
+            onNewChat={() => setIsNewChatOpen(true)}
+            isLoading={conversationsLoading}
+            loadError={conversationsError}
+            mutedConversationIds={mutedConversationIds}
+            nicknames={nicknames}
           />
           <MobileTabBar
             active="chats"
@@ -277,6 +412,7 @@ export default function ChatPage() {
               >
                 <ChatHeader
                   conversation={selectedConversation}
+                  nickname={nicknames[selectedConversation._id]}
                   onBack={() => setMobileView('list')}
                   onToggleDetails={() => setIsDetailsOpen((open) => !open)}
                 />
@@ -285,8 +421,11 @@ export default function ChatPage() {
                   messages={messagesByConversation[selectedConversation._id] ?? []}
                   currentUserId={currentUser._id}
                   isOtherTyping={typingConversationId === selectedConversation._id}
+                  isLoading={selectedMessageState === 'loading'}
+                  loadError={messageLoadErrors[selectedConversation._id] ?? null}
+                  accentColor={accentColors[selectedConversation._id]}
                 />
-                <Composer onSend={handleSendMessage} />
+                <Composer onSend={handleSendMessage} onTyping={handleTyping} />
               </motion.div>
             ) : (
               <motion.main
@@ -295,11 +434,31 @@ export default function ChatPage() {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.18, ease: 'easeOut' }}
-                className="flex flex-1 items-center justify-center bg-gray-50"
+                className="flex flex-1 flex-col items-center justify-center gap-3 bg-gray-50 px-6 text-center"
               >
-                <p className="text-sm text-secondary">
-                  Select a conversation to start chatting
-                </p>
+                {conversationsLoading ? (
+                  <p className="text-sm text-secondary">
+                    Loading conversations…
+                  </p>
+                ) : (
+                  <>
+                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
+                      <MessageSquare className="h-8 w-8" />
+                    </div>
+                    <div>
+                      <p className="text-base font-semibold text-gray-900">
+                        {conversations.length === 0
+                          ? 'No conversations yet'
+                          : 'Select a chat'}
+                      </p>
+                      <p className="mt-1 text-sm text-secondary">
+                        {conversations.length === 0
+                          ? 'Start a new chat to say hello 👋'
+                          : 'Pick a conversation from the list to start messaging'}
+                      </p>
+                    </div>
+                  </>
+                )}
               </motion.main>
             )}
           </AnimatePresence>
@@ -310,8 +469,31 @@ export default function ChatPage() {
         <ChatDetailsPanel
           isOpen={isDetailsOpen}
           onClose={() => setIsDetailsOpen(false)}
+          conversation={selectedConversation}
+          messages={messagesByConversation[selectedConversation._id] ?? []}
+          muted={mutedConversationIds.has(selectedConversation._id)}
+          onToggleMute={() => handleToggleMute(selectedConversation._id)}
+          nickname={nicknames[selectedConversation._id]}
+          onSetNickname={(name) =>
+            handleSetNickname(selectedConversation._id, name)
+          }
+          accentColor={accentColors[selectedConversation._id]}
+          onSetAccentColor={(color) =>
+            handleSetAccentColor(selectedConversation._id, color)
+          }
+          quickEmoji={quickEmojis[selectedConversation._id]}
+          onSetQuickEmoji={(emoji) =>
+            handleSetQuickEmoji(selectedConversation._id, emoji)
+          }
         />
       )}
+
+      <NewChatDialog
+        open={isNewChatOpen}
+        onOpenChange={setIsNewChatOpen}
+        onSelectUser={handleSelectUserForNewChat}
+        startingUserId={startingUserId}
+      />
     </div>
   )
 }
