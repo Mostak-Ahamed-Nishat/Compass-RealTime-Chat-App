@@ -1,4 +1,6 @@
-# API Quick Reference
+# API Quick Reference (early draft)
+
+> This was the first-pass scratch reference written while first exploring the API, kept for the record of that process. **[docs/API.md](API.md) is the maintained, verified reference** — it documents things this draft doesn't (e.g. `GET /users/search` is actually case-sensitive and prefix-only) and covers more of what was found testing against the live server. Link to `API.md`, not this file.
 
 **Base URL:** `https://frontend-task-chatapp.onrender.com/api`
 

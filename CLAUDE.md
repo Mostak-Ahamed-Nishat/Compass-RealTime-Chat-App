@@ -120,6 +120,7 @@ Note **`participant`, singular** — the other user only, not an array, and not 
 
 ## API Quirks/Notes
 - `GET /users/search` returns a bare array; `GET /conversations` and `GET /conversations/{id}/messages` both wrap results, but under different keys (`data` vs. `messages`).
+- `GET /users/search` is **case-sensitive and prefix-only**, not the case-insensitive substring match a "search" endpoint implies — `Nishat`/`Nish` match, `nishat`/`nish` don't, and a correctly-cased mid-string substring like `isha` doesn't either. Worked around client-side by querying a few case variants in parallel and merging results (`src/lib/api.ts`).
 - Direct and group conversations have different fields (`participant` vs. `participants`, presence of `name`/`admins`/`createdBy`).
 - `lastMessage` is `{}` (empty object), not `null`, when a conversation has no messages yet.
 - Pagination **does** exist on the messages endpoint (`limit`, `before`, `hasMore`) — the API is not pagination-free.

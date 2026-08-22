@@ -83,6 +83,19 @@ export default function ChatPage() {
     selectedConversationIdRef.current = selectedConversationId
   }, [selectedConversationId])
   const reduceMotion = useReducedMotion()
+  // Desktop always shows a thread in the center pane, so it's fine to
+  // auto-select the first conversation there. Mobile is single-pane —
+  // auto-selecting would count as "opening" that chat, so it must land on
+  // the chat list instead and only open a thread once the user taps one.
+  const [isDesktop, setIsDesktop] = useState(false)
+
+  useEffect(() => {
+    const mql = window.matchMedia('(min-width: 768px)')
+    setIsDesktop(mql.matches)
+    const handleChange = (e: MediaQueryListEvent) => setIsDesktop(e.matches)
+    mql.addEventListener('change', handleChange)
+    return () => mql.removeEventListener('change', handleChange)
+  }, [])
 
   useEffect(() => {
     if (!isLoading && !currentUser) {
@@ -115,12 +128,13 @@ export default function ChatPage() {
     }
   }, [currentUser?._id])
 
-  // Auto-select the first conversation once the list loads, if none is selected yet.
+  // Auto-select the first conversation once the list loads, if none is
+  // selected yet — desktop only, see isDesktop above.
   useEffect(() => {
-    if (!selectedConversationId && conversations.length > 0) {
+    if (isDesktop && !selectedConversationId && conversations.length > 0) {
       setSelectedConversationId(conversations[0]._id)
     }
-  }, [conversations, selectedConversationId])
+  }, [isDesktop, conversations, selectedConversationId])
 
   // Enrich conversations with mock presence data for direct conversations.
   // In a real app, this would come from Socket.io presence events or an API.

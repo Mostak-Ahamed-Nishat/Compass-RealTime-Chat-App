@@ -1,162 +1,90 @@
 # Project Progress Tracker
 
-**Last Updated:** Aug 22, 2026  
-**Deadline:** Aug 22, 2026 4:00 PM  
-**Time Remaining:** ~TBD
+**Last updated:** Aug 22, 2026
+**Deadline:** Aug 22, 2026 4:00 PM
 
 ---
 
-## Overall Status
+## Overall status
 
-| Part | Status | Completion | Notes |
-|------|--------|-----------|-------|
-| **Part 1: Implementation** | 🔴 Not Started | 0% | Core chat features |
-| **Part 2: Landing Page** | 🔴 Not Started | 0% | Creative showcase |
-| **Part 3: Write-up** | 🔴 Not Started | 0% | Documentation |
-| **Deployment** | 🔴 Not Started | 0% | Vercel links |
-| **Submission** | 🔴 Not Started | 0% | GitHub + links |
-
----
-
-## Part 1: Implementation Progress
-
-**Target Completion:** Part 1 by ~10 AM (Day 1)
-
-### Feature Breakdown
-
-| Feature | Status | Priority | ETA |
-|---------|--------|----------|-----|
-| Login | ⬜ | HIGH | |
-| User Search | ⬜ | HIGH | |
-| Direct Conversations | ⬜ | HIGH | |
-| Group Conversations | ⬜ | HIGH | |
-| Message List | ⬜ | CRITICAL | |
-| Send Messages | ⬜ | CRITICAL | |
-| Real-time Updates | ⬜ | CRITICAL | |
-| Auto-scroll | ⬜ | HIGH | |
-| Loading/Error States | ⬜ | HIGH | |
-| Responsive Design | ⬜ | MEDIUM | |
-| Accessibility | ⬜ | MEDIUM | |
-| Bonus Feature | ⬜ | LOW | |
-
-### Code Quality Checklist
-
-- ⬜ TypeScript types complete
-- ⬜ API client wrapper (lib/api.ts)
-- ⬜ Auth utilities (lib/auth.ts)
-- ⬜ Custom hooks created
-- ⬜ Component structure organized
-- ⬜ Error boundaries in place
-- ⬜ Responsive CSS/Tailwind
-- ⬜ Code review for bugs
+| Part | Status | Notes |
+|------|--------|-------|
+| **Part 1: Implementation** | 🟢 Functionally complete | Login, search, direct + group chat, real-time, states, auto-scroll all built. A few UI-wiring gaps remain — see below |
+| **Part 2: Landing Page** | 🟢 Complete | Original design, live interactive chat demo as the bonus, GSAP/Framer motion pass done |
+| **Part 3: Write-up** | 🟢 Complete | [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) |
+| **Deployment** | 🔴 Not started | No live URL yet — the one hard blocker before submission |
+| **Submission** | 🟡 Blocked on deployment | Repo, README, and write-up are ready; just needs the live links |
 
 ---
 
-## Part 2: Landing Page Progress
+## Part 1: implementation
 
-**Target Completion:** Part 2 by ~4 PM (Day 1)
+| Feature | Status |
+|---------|--------|
+| Login (phone + name, auto-register) | ✅ |
+| Session restore on refresh | ✅ |
+| User search | ✅ |
+| Start direct conversation | ✅ |
+| Create group conversation | ✅ |
+| Add/remove group members, rename group | ✅ |
+| Promote member to admin | Client call exists (`lib/api.ts`); not wired into a menu yet |
+| Message list with timestamps, sender/receiver distinguished | ✅ |
+| Send messages, empty-text blocked client-side | ✅ |
+| Optimistic send (sending → sent → failed) | ✅ — tap-to-retry on a failed message not wired up yet |
+| Real-time updates (Socket.io) | ✅ |
+| Typing indicator | ✅ (best-effort, undocumented event) |
+| Auto-scroll that respects manual scroll-up | ✅ |
+| Loading/empty/error states | ✅ |
+| Older-message pagination (`before` cursor) | Not wired up — API supports it, UI only loads the latest page |
+| Responsive design | ✅ |
 
-### Milestones
-
-- ⬜ Design mockup created
-- ⬜ Color palette finalized
-- ⬜ Typography chosen
-- ⬜ Component structure planned
-- ⬜ Hero section built
-- ⬜ Feature showcase sections built
-- ⬜ CTA section built
-- ⬜ Animations implemented (GSAP + Framer Motion)
-- ⬜ Responsive design tested
-- ⬜ Performance optimized
-- ⬜ Bonus feature implemented
-
----
-
-## Part 3: Write-up & Submission
-
-**Target Completion:** Submission by 3:50 PM (Day 1)
-
-### Content
-
-- ⬜ Architecture decisions documented
-- ⬜ Design choices explained
-- ⬜ AI tool usage noted
-- ⬜ API quirks documented
-- ⬜ Improvements listed
-- ⬜ README written with setup instructions
-- ⬜ Tech stack documented
-
-### Deployment
-
-- ⬜ Part 1 deployed to Vercel
-- ⬜ Part 2 deployed to Vercel
-- ⬜ Both URLs tested and working
-- ⬜ GitHub repo created
-- ⬜ Code pushed to GitHub
-- ⬜ All links verified before submission
+### Code quality
+- ✅ TypeScript types for all API models (`src/types/index.ts`)
+- ✅ API client wrapper (`src/lib/api.ts`)
+- ✅ Auth utilities (`src/lib/auth.ts`)
+- ✅ Component structure organized by feature (`chat/`, `auth/`, `ui/`, `landing/`)
+- ✅ Responsive throughout
+- ❌ No automated test suite committed (manual + ad hoc Playwright verification only — see [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md#what-id-improve-with-more-time))
+- ❌ No React error boundary
 
 ---
 
-## Daily Timeline
+## Part 2: landing page
 
-### Day 1 (Aug 22)
-
-**Morning (8 AM - 12 PM)**
-- [ ] 8:00-9:00 — Set up project structure, environment
-- [ ] 9:00-10:00 — Build login page & user search
-- [ ] 10:00-11:00 — Implement conversation list
-- [ ] 11:00-12:00 — Build message list component
-
-**Afternoon (12 PM - 4 PM)**
-- [ ] 12:00-1:00 — Implement send messages + real-time
-- [ ] 1:00-2:00 — Add auto-scroll & polish
-- [ ] 2:00-3:00 — Build landing page
-- [ ] 3:00-3:50 — Deploy & write Part 3, submit
+- ✅ Color palette, type pairing (Inter + Sora), and layout are original — not a template
+- ✅ Hero, features, how-it-works, social proof, closing CTA sections built
+- ✅ GSAP + ScrollTrigger + Lenis for scroll-driven reveals, Framer Motion for in-app transitions
+- ✅ Responsive at mobile/desktop widths, `prefers-reduced-motion` respected
+- ✅ Bonus: live, interactive embed of the real `MessageBubble`/`TypingIndicator` components in the hero — not a screenshot or a scripted animation only
 
 ---
 
-## Known Blockers & Solutions
+## Part 3: write-up & submission
 
-| Blocker | Status | Solution |
-|---------|--------|----------|
-| None yet | ✅ | — |
-
----
-
-## Completed Sections
-
-✅ Project setup (Next.js, TypeScript, Tailwind)  
-✅ API documentation (docs/API.md)  
-✅ Environment configuration (.env.development, .env.production)  
-✅ .gitignore configured  
-✅ Quick API reference (docs/RoughAPIDoc.md)  
+- ✅ Architecture/library trade-offs documented
+- ✅ Part 2 design reasoning documented
+- ✅ AI tool usage documented — what for, what was changed/rejected
+- ✅ Improvements-with-more-time list
+- ✅ API quirks documented (and cross-checked against the actual client code — see [docs/API.md](docs/API.md))
+- ✅ README rewritten with setup instructions, tech stack, and feature status
+- 🔴 Part 1 deployed to a live URL
+- 🔴 Part 2 deployed to a live URL
+- 🔴 Both URLs tested and added to README
+- ✅ GitHub repo exists and is current
 
 ---
 
-## Next Steps
+## What's actually left before this can be submitted
 
-1. Start with **Part 1: Implementation**
-   - Create page structure (login → conversation list → message panel)
-   - Build API client wrapper (lib/api.ts)
-   - Implement login flow
-   
-2. Then **Part 2: Landing Page**
-   - Design and build showcase page
-   - Add animations and interactivity
-
-3. Finally **Part 3 & Submission**
-   - Write up approach and decisions
-   - Deploy to Vercel
-   - Push to GitHub
-   - Submit links
+1. **Deploy to Vercel (or similar) and add both URLs to the README.** Per the assignment, a submission without working demo links won't be reviewed — this is the only remaining blocker.
+2. Optional polish if time allows, roughly in priority order: tap-to-retry on a failed send, promote-to-admin in the group menu, older-message pagination.
 
 ---
 
-## Reference Links
+## Reference links
 
-- **API Docs:** https://frontend-task-chatapp.onrender.com/docs/
-- **API Base URL:** https://frontend-task-chatapp.onrender.com/api
-- **Full API Reference:** docs/API.md
-- **Quick API Guide:** docs/RoughAPIDoc.md
-- **Assignment Brief:** Assignment.md
-- **Detailed TODO:** TODO.md
+- **API Docs (Swagger):** https://frontend-task-chatapp.onrender.com/docs/
+- **API base URL:** https://frontend-task-chatapp.onrender.com/api
+- **Full API reference:** [docs/API.md](docs/API.md)
+- **Assignment brief:** [Assignment.md](Assignment.md)
+- **Part 3 write-up:** [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)

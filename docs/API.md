@@ -41,7 +41,7 @@ Missing token → `400 NO_TOKEN`, not 401. There's no 401 anywhere in this API �
 ## Users
 
 ### GET /users/search
-Searches name and phone, case-insensitive, substring match.
+Searches name and phone.
 
 - Query: `q` (required) — search term
 
@@ -52,6 +52,8 @@ Returns a bare array — not wrapped in `data` like the endpoints below.
   { "_id": "6a882468e5d6aac97521e25e", "name": "Ada Lovelace", "phone": "+15551234567" }
 ]
 ```
+
+**Case-sensitive and prefix-only** — this isn't documented in Swagger and isn't what you'd assume from a "search" endpoint. Confirmed directly against the server: for a user named "Nishat," querying `Nishat` or `Nish` matches, but `nishat` or `nish` (lowercase) returns nothing — and even a correctly-cased mid-string substring like `isha` matches nothing either. It's a prefix match on the exact case stored, not a case-insensitive substring search. Since that's a server-side limitation, the client works around it by querying a small set of case variants of the user's input in parallel (as typed, lowercase, uppercase, capitalized) and merging the results, so search feels case-insensitive without the server actually being so — see `users.search` in `src/lib/api.ts`.
 
 ---
 
