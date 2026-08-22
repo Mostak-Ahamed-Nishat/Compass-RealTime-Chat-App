@@ -16,6 +16,8 @@ interface EmojiPickerComponentProps {
   className?: string
   size?: 'sm' | 'default' | 'lg'
   disabled?: boolean
+  /** Close the popover after picking one emoji. Default true (composer use). */
+  closeOnSelect?: boolean
 }
 
 const PICKER_WIDTH = 320
@@ -25,7 +27,17 @@ const VIEWPORT_MARGIN = 8
 const EmojiPickerComponent = React.forwardRef<
   HTMLButtonElement,
   EmojiPickerComponentProps
->(({ onEmojiSelect, className, size = 'default', disabled = false }, forwardedRef) => {
+>(
+  (
+    {
+      onEmojiSelect,
+      className,
+      size = 'default',
+      disabled = false,
+      closeOnSelect = true,
+    },
+    forwardedRef
+  ) => {
   const [showPicker, setShowPicker] = useState(false)
   const [position, setPosition] = useState<{ top: number; left: number } | null>(
     null
@@ -98,7 +110,7 @@ const EmojiPickerComponent = React.forwardRef<
 
   const handleEmojiClick = (emojiData: any) => {
     onEmojiSelect(emojiData.emoji)
-    setShowPicker(false)
+    if (closeOnSelect) setShowPicker(false)
   }
 
   return (

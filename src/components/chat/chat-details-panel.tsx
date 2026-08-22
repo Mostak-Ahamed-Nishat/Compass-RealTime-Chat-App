@@ -466,6 +466,7 @@ const ChatDetailsPanel = ({
                             <EmojiPickerComponent
                               onEmojiSelect={(emoji) => onSetQuickEmoji?.(emoji)}
                               size="sm"
+                              closeOnSelect={false}
                             />
                             {quickEmoji && (
                               <button

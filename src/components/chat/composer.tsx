@@ -8,15 +8,19 @@ export interface ComposerProps {
   onTyping?: () => void
   disabled?: boolean
   className?: string
+  /** Shown as the action button in place of Send while the field is empty. */
+  quickEmoji?: string
 }
 
 const MAX_TEXTAREA_HEIGHT = 120
+const DEFAULT_QUICK_EMOJI = '👍'
 
 const Composer = ({
   onSend,
   onTyping,
   disabled = false,
   className,
+  quickEmoji = DEFAULT_QUICK_EMOJI,
 }: ComposerProps) => {
   const [value, setValue] = React.useState('')
   const textareaRef = React.useRef<HTMLTextAreaElement>(null)
@@ -50,6 +54,11 @@ const Composer = ({
       event.preventDefault()
       handleSend()
     }
+  }
+
+  const handleQuickEmojiSend = () => {
+    if (disabled) return
+    onSend(quickEmoji)
   }
 
   return (
@@ -88,15 +97,21 @@ const Composer = ({
         />
       </div>
 
-      <IconButton
-        icon={<Send className="h-5 w-5" />}
-        label="Send message"
-        onClick={handleSend}
-        disabled={!canSend}
-        className={cn(
-          canSend && 'bg-primary text-primary-foreground hover:bg-primary-hover'
-        )}
-      />
+      {canSend ? (
+        <IconButton
+          icon={<Send className="h-5 w-5" />}
+          label="Send message"
+          onClick={handleSend}
+          className="bg-primary text-primary-foreground hover:bg-primary-hover"
+        />
+      ) : (
+        <IconButton
+          icon={<span className="text-lg leading-none">{quickEmoji}</span>}
+          label={`Send ${quickEmoji}`}
+          onClick={handleQuickEmojiSend}
+          disabled={disabled}
+        />
+      )}
     </div>
   )
 }

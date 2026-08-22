@@ -536,7 +536,11 @@ export default function ChatPage() {
                   loadError={messageLoadErrors[selectedConversation._id] ?? null}
                   accentColor={accentColors[selectedConversation._id]}
                 />
-                <Composer onSend={handleSendMessage} onTyping={handleTyping} />
+                <Composer
+                  onSend={handleSendMessage}
+                  onTyping={handleTyping}
+                  quickEmoji={quickEmojis[selectedConversation._id]}
+                />
               </motion.div>
             ) : (
               <motion.main
