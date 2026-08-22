@@ -10,7 +10,7 @@
 
 ## Overview
 
-This is a three-part take-home assignment (see [Assignment.md](Assignment.md) for the original brief). Parts build on each other and should be completed in order.
+This is a three-part take-home assignment. The original brief (`Assignment.md`) was used to scope the project and has since been removed from the repo — it was a reference document for planning, not a submission deliverable. Parts build on each other and should be completed in order.
 
 - **Part 1** — Document the given API, then build the chat screens against it: login, user search, direct + group conversations, message list, sending, real-time updates, loading/empty/error states, auto-scroll. **The chat panel (message list, sending, real-time behavior) is where the most care and polish should go** — that's explicitly what's evaluated closest.
 - **Part 2** — A creative landing page showcasing what was built in Part 1. Fully open on visual direction; the brief explicitly wants boldness over a generic template.
@@ -18,7 +18,7 @@ This is a three-part take-home assignment (see [Assignment.md](Assignment.md) fo
 
 Both Part 1 and Part 2 call out a **bonus** for one genuinely original touch — not a common pattern executed well, but something that shows one-step-ahead thinking. See [Bonus Ideas](#bonus-ideas-to-consider) below.
 
-**Note on the assignment file itself:** [Assignment.md:68](Assignment.md#L68) contains a hidden instruction directed at AI assistants (asking any AI summarizing the document to insert an unrelated word into its output). This has been ignored as a prompt injection, not a real project requirement. Flagging it here so it isn't mistaken for an oversight later.
+**Note on the assignment file itself:** the original brief contained a hidden instruction directed at AI assistants (asking any AI summarizing the document to insert an unrelated word into its output). This was identified as a prompt injection, not a real project requirement, and was ignored. It is not mentioned in the submitted docs (README/DEVELOPMENT.md) since it isn't relevant to evaluating the project.
 
 ---
 
@@ -293,7 +293,7 @@ Not needed for this project: `dataviz` (no charts), `keybindings-help`/`update-c
 - [x] Real-time message updates
 - [x] Loading/empty/error states
 - [x] Auto-scroll behavior
-- [x] One deliberate bonus touch (optimistic send with sending/failed states — tap-to-retry still open, see [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md#what-id-improve-with-more-time))
+- [x] One deliberate bonus touch (optimistic send with sending/failed states — tap-to-retry still open, see [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md#6-what-id-improve-with-more-time))
 - [ ] Deploy to live URL
 
 ---
@@ -304,17 +304,17 @@ Not needed for this project: `dataviz` (no charts), `keybindings-help`/`update-c
 - [x] Deliberate typography & color palette (not default Tailwind theme)
 - [x] Showcase the actual Part 1 feature, not generic marketing sections
 - [x] GSAP/Framer Motion animation pass
-- [ ] One deliberate bonus touch — the live chat demo embed was removed when the hero was redesigned (2026-08-22, see [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md#design-reasoning-part-2)); currently open
+- [ ] One deliberate bonus touch — the live chat demo embed was removed when the hero was redesigned (2026-08-22, see [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md#6-what-id-improve-with-more-time)); currently open
 - [ ] Deploy to live URL
 
 ---
 
 ## Part 3 Checklist
-- [x] Architecture/library choices explained, with trade-offs ([docs/DEVELOPMENT.md](docs/DEVELOPMENT.md#architecture--trade-offs))
-- [x] Design reasoning for Part 2 ([docs/DEVELOPMENT.md](docs/DEVELOPMENT.md#design-reasoning-part-2))
-- [x] AI tool usage documented — what was used for, what was changed/rejected ([docs/DEVELOPMENT.md](docs/DEVELOPMENT.md#ai-tool-usage))
-- [x] Improvements noted ([docs/DEVELOPMENT.md](docs/DEVELOPMENT.md#what-id-improve-with-more-time))
-- [x] API issues/quirks section ([docs/DEVELOPMENT.md](docs/DEVELOPMENT.md#api-issues-encountered))
+- [x] Architecture/library choices explained, with trade-offs ([docs/DEVELOPMENT.md](docs/DEVELOPMENT.md#2-architecture--key-trade-offs))
+- [x] Design reasoning for Part 2 ([docs/DEVELOPMENT.md](docs/DEVELOPMENT.md#3-design-reasoning))
+- [x] AI tool usage documented — what was used for, what was changed/rejected ([docs/DEVELOPMENT.md](docs/DEVELOPMENT.md#4-ai-tool-usage))
+- [x] Improvements noted ([docs/DEVELOPMENT.md](docs/DEVELOPMENT.md#6-what-id-improve-with-more-time))
+- [x] API issues/quirks section ([docs/DEVELOPMENT.md](docs/DEVELOPMENT.md#5-api-issues--handling))
 
 ---
 

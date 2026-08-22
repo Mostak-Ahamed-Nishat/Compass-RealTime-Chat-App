@@ -1,11 +1,11 @@
 import * as React from 'react'
-import { Logo } from '@/components/ui'
+import { LogoLink } from '@/components/ui'
 
 const SiteFooter = () => (
-  <footer className="border-t border-gray-100 bg-white py-10">
+  <footer className="border-t border-white/10 bg-[#0b0b12] py-10 text-white">
     <div className="mx-auto flex max-w-6xl flex-col items-center gap-4 px-6 text-center sm:flex-row sm:justify-between sm:text-left">
-      <Logo variant="dark" />
-      <p className="text-sm text-secondary">
+      <LogoLink variant="light" />
+      <p className="text-sm text-white/40">
         © {new Date().getFullYear()} Compass. All rights reserved.
       </p>
     </div>

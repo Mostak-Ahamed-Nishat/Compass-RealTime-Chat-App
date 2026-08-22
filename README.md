@@ -40,7 +40,7 @@ The landing page (`/`) is a separate, from-scratch design pass built to showcase
 | Forms | react-hook-form | Login and dialog forms need validation without hand-rolled state plumbing |
 | In-app motion | Framer Motion | Message bubbles entering, list reordering, dialog/panel transitions — declarative and plays well with mount/unmount |
 | Landing-page motion | GSAP + ScrollTrigger + Lenis | Scroll-driven reveals and a smoothed scroll feed on the landing page only, kept separate from Framer Motion to avoid two libraries fighting over the same transforms |
-| Real-time | socket.io-client, with the REST message-history endpoint as the source of truth | Confirmed working against the live API; polling was the planned fallback if the socket handshake failed (see [Architecture & trade-offs](docs/DEVELOPMENT.md#architecture--trade-offs)) |
+| Real-time | socket.io-client, with the REST message-history endpoint as the source of truth | Confirmed working against the live API; polling was the planned fallback if the socket handshake failed (see [Architecture & trade-offs](docs/DEVELOPMENT.md#2-architecture--key-trade-offs)) |
 | State | React Context (auth + a page-level reducer-ish set of hooks in `chat.tsx`) | The state surface is one auth object and one conversation/message tree — a global store would add ceremony without solving a real problem here |
 | Fonts | next/font (Inter for body, Sora for display headlines) | The pairing the design direction called for was scoped but never actually wired up — this closes that gap |
 

@@ -94,6 +94,58 @@ button:disabled {
   animation: gradient-text-shift 6s linear infinite;
 }
 
+@keyframes ping-ring {
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+.animate-ping-ring {
+  animation: ping-ring 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+@keyframes greeting-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-greeting-in {
+  animation: greeting-in 0.4s ease-out;
+}
+
+@keyframes avatar-bounce {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-7px) scale(1.05);
+  }
+}
+.animate-avatar-bounce {
+  animation: avatar-bounce 2.2s ease-in-out infinite;
+}
+
+@keyframes image-float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+.animate-image-float {
+  animation: image-float 5s ease-in-out infinite;
+}
+
 @keyframes dialog-overlay-in {
   from { opacity: 0; }
   to { opacity: 1; }

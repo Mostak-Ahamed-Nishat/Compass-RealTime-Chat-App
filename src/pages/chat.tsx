@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react'
+import Head from 'next/head'
 import { useRouter } from 'next/router'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { MessageSquare } from 'lucide-react'
@@ -555,12 +556,17 @@ export default function ChatPage() {
 
   if (isLoading || !currentUser) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-secondary">Loading...</p>
+      <>
+        <Head>
+          <title>Chat — Compass</title>
+        </Head>
+        <div className="flex items-center justify-center h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-secondary">Loading...</p>
+          </div>
         </div>
-      </div>
+      </>
     )
   }
 
@@ -572,8 +578,12 @@ export default function ChatPage() {
     : undefined
 
   return (
-    <div className="flex h-screen overflow-hidden bg-white">
-      <div className="relative h-full w-full overflow-hidden md:contents">
+    <>
+      <Head>
+        <title>Chat — Compass</title>
+      </Head>
+      <div className="flex h-screen overflow-hidden bg-white">
+        <div className="relative h-full w-full overflow-hidden md:contents">
         <div
           className={cn(
             'absolute inset-0 flex h-full w-full flex-col bg-white transition-transform duration-300 ease-in-out md:static md:inset-auto md:h-full md:w-auto md:shrink-0 md:translate-x-0 md:transition-none',
@@ -740,6 +750,7 @@ export default function ChatPage() {
           isAdding={isAddingMembers}
         />
       )}
-    </div>
+      </div>
+    </>
   )
 }

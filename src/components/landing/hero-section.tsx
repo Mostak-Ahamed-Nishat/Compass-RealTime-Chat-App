@@ -28,27 +28,6 @@ const FLOAT_CARDS: FloatCard[] = [
   },
 ]
 
-const NETWORK_DOTS = [
-  { cx: 480, cy: 90, r: 3 },
-  { cx: 560, cy: 60, r: 2 },
-  { cx: 610, cy: 170, r: 4 },
-  { cx: 520, cy: 240, r: 2 },
-  { cx: 440, cy: 320, r: 3 },
-  { cx: 590, cy: 400, r: 2 },
-  { cx: 470, cy: 470, r: 5 },
-  { cx: 350, cy: 210, r: 2 },
-]
-
-const NETWORK_LINES = [
-  [0, 1],
-  [1, 2],
-  [0, 3],
-  [3, 4],
-  [4, 7],
-  [4, 5],
-  [5, 6],
-]
-
 const HeroSection = () => {
   const rootRef = React.useRef<HTMLDivElement>(null)
   const spotlightRef = React.useRef<HTMLDivElement>(null)
@@ -153,29 +132,6 @@ const HeroSection = () => {
       ref={rootRef}
       className="relative isolate min-h-[94vh] overflow-hidden bg-[#080809] pb-14 pt-28 text-white sm:pt-32"
     >
-      <svg
-        aria-hidden
-        viewBox="0 0 700 600"
-        className="pointer-events-none absolute inset-y-0 right-0 -z-10 h-full w-[55%] opacity-25"
-        preserveAspectRatio="xMaxYMid slice"
-      >
-        {NETWORK_LINES.map(([a, b]) => (
-          <line
-            key={`${a}-${b}`}
-            x1={NETWORK_DOTS[a].cx}
-            y1={NETWORK_DOTS[a].cy}
-            x2={NETWORK_DOTS[b].cx}
-            y2={NETWORK_DOTS[b].cy}
-            stroke="white"
-            strokeOpacity={0.4}
-            strokeWidth={1}
-          />
-        ))}
-        {NETWORK_DOTS.map((dot, index) => (
-          <circle key={index} cx={dot.cx} cy={dot.cy} r={dot.r} fill="white" />
-        ))}
-      </svg>
-
       <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[420px] bg-gradient-to-b from-primary/20 via-transparent to-transparent" />
 
       <div

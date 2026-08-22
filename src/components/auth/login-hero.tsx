@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { Image as ImageIcon, Mic, Smile, Zap } from 'lucide-react'
-import { Logo } from '@/components/ui'
+import { LogoLink } from '@/components/ui'
 import { FeatureCard } from './feature-card'
 
 const HERO_IMAGE_URL =
@@ -29,7 +29,7 @@ const LoginHero = () => (
     <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
 
     <div className="relative z-10 flex h-full flex-col justify-between p-8 lg:p-12">
-      <Logo variant="light" />
+      <LogoLink variant="light" />
 
       <div>
         <h1 className="text-4xl font-extrabold leading-tight text-white sm:text-5xl">

@@ -26,6 +26,7 @@ export {
 } from './dropdown-menu'
 export { Separator } from './separator'
 export { Logo, type LogoProps } from './logo'
+export { LogoLink, type LogoLinkProps } from './logo-link'
 export { ConfirmDialog, type ConfirmDialogProps } from './confirm-dialog'
 export { PresenceIndicator, type PresenceIndicatorProps } from './presence-indicator'
 export { ReadReceipt, type ReadReceiptProps } from './read-receipt'

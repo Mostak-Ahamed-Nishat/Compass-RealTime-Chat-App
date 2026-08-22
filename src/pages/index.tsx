@@ -5,10 +5,13 @@ import {
   ConnectMarqueeSection,
   DistanceSection,
   MomentsScrollSection,
+  FamilyCloseSection,
+  OnboardingCarouselSection,
+  InstantPulseSection,
+  LanguageSection,
   CursorFollower,
-  FeaturesSection,
-  HowItWorksSection,
-  SocialProofSection,
+  WhatsInsideSection,
+  TestimonialsSection,
   FinalCtaSection,
   SiteFooter,
   useScrollReveals,
@@ -19,19 +22,20 @@ export default function LandingPage() {
   useScrollReveals(pageRef)
 
   return (
-    <div ref={pageRef} className="min-h-screen bg-white">
+    <div ref={pageRef} className="min-h-screen bg-[#0b0b12]">
       <CursorFollower />
       <SiteHeader />
       <main>
-        <div id="dark-intro">
-          <HeroSection />
-          <ConnectMarqueeSection />
-          <DistanceSection />
-          <MomentsScrollSection />
-        </div>
-        <FeaturesSection />
-        <HowItWorksSection />
-        <SocialProofSection />
+        <HeroSection />
+        <ConnectMarqueeSection />
+        <DistanceSection />
+        <MomentsScrollSection />
+        <FamilyCloseSection />
+        <OnboardingCarouselSection />
+        <InstantPulseSection />
+        <LanguageSection />
+        <WhatsInsideSection />
+        <TestimonialsSection />
         <FinalCtaSection />
       </main>
       <SiteFooter />

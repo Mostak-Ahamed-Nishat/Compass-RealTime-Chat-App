@@ -4,7 +4,7 @@ import { useRouter } from 'next/router'
 import { useForm } from 'react-hook-form'
 import { AnimatePresence, motion } from 'framer-motion'
 import { ArrowRight, Phone, User as UserIcon } from 'lucide-react'
-import { Button, Input, Logo } from '@/components/ui'
+import { Button, Input, LogoLink } from '@/components/ui'
 import { auth as authApi } from '@/lib/api'
 import { auth as tokenStore } from '@/lib/auth'
 import { CommunityAvatars } from './community-avatars'
@@ -51,7 +51,7 @@ const LoginForm = ({ onSuccess }: LoginFormProps) => {
   return (
     <div className="flex w-full flex-1 items-center justify-center px-6 py-12 md:min-h-screen md:w-1/2 sm:px-10 lg:w-[45%]">
       <div className="w-full max-w-sm">
-        <Logo variant="dark" className="mb-8 md:hidden" />
+        <LogoLink variant="dark" className="mb-8 md:hidden" />
 
         <h2 className="text-3xl font-extrabold text-gray-900">
           Welcome <span aria-hidden>👋</span>

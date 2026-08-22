@@ -65,18 +65,22 @@ const DistanceSection = () => {
         scrollTrigger: {
           trigger: sectionRef.current,
           start: 'top top',
-          end: '+=100%',
+          end: '+=135%',
           scrub: true,
           pin: true,
           onUpdate: (self) => {
-            if (self.progress > 0.985 && !hasPulsedRef.current) {
+            // The timeline now runs 1.35 "units" long (1 for the real
+            // animation, 0.35 held at the end), so completion lands at
+            // ~0.74 of scrollTrigger progress, not 1 — thresholds are
+            // scaled to that instead of the old near-1 values.
+            if (self.progress > 0.72 && !hasPulsedRef.current) {
               hasPulsedRef.current = true
               gsap.fromTo(
                 pulseRef.current,
                 { scale: 0.6, opacity: 0.9 },
                 { scale: 2.4, opacity: 0, duration: 0.7, ease: 'power2.out' }
               )
-            } else if (self.progress < 0.9) {
+            } else if (self.progress < 0.65) {
               hasPulsedRef.current = false
             }
           },
@@ -85,13 +89,14 @@ const DistanceSection = () => {
       })
 
       timeline
-        .to(youRef.current, { left: YOU_END_LEFT }, 0)
-        .to(themRef.current, { left: THEM_END_LEFT }, 0)
-        .to(fillRef.current, { scaleX: 0 }, 0)
+        .to(youRef.current, { left: YOU_END_LEFT, duration: 1 }, 0)
+        .to(themRef.current, { left: THEM_END_LEFT, duration: 1 }, 0)
+        .to(fillRef.current, { scaleX: 0, duration: 1 }, 0)
         .to(
           proxy,
           {
             progress: 1,
+            duration: 1,
             onUpdate: () => {
               if (!numberRef.current) return
               const value = Math.round(START_DISTANCE * (1 - proxy.progress))
@@ -100,6 +105,11 @@ const DistanceSection = () => {
           },
           0
         )
+        // Hold the settled "0 km apart" state for the last stretch of the
+        // pin instead of releasing the instant the count-down finishes —
+        // without this, hitting 0 and unpinning into the next section
+        // happen in the same scroll tick and read as a sudden jump cut.
+        .to({}, { duration: 0.35 })
     }, sectionRef)
 
     return () => ctx.revert()
@@ -108,13 +118,13 @@ const DistanceSection = () => {
   return (
     <section
       ref={sectionRef}
-      className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-[#080809] px-6 text-white"
+      className="relative flex min-h-screen flex-col items-center overflow-hidden bg-[#080809] px-6 pt-32 text-white"
     >
       <p className="text-xs font-semibold uppercase tracking-[0.25em] text-white/40">
         Distance between you and them
       </p>
 
-      <div className="relative mt-16 h-16 w-full max-w-3xl">
+      <div className="relative mt-10 h-16 w-full max-w-3xl">
         <div className="absolute left-0 right-0 top-1/2 h-px -translate-y-1/2 bg-white/15" />
         <div
           ref={fillRef}
@@ -142,7 +152,7 @@ const DistanceSection = () => {
         </div>
       </div>
 
-      <p className="mt-14 flex items-baseline gap-2 font-display text-6xl font-extrabold sm:text-7xl">
+      <p className="mt-10 flex items-baseline gap-2 font-display text-6xl font-extrabold sm:text-7xl">
         <span ref={numberRef}>{START_DISTANCE.toLocaleString()}</span>
         <span className="text-xl font-normal text-white/40 sm:text-2xl">km apart</span>
       </p>

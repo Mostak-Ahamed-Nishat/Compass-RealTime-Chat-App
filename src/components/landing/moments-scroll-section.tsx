@@ -88,8 +88,8 @@ const MomentsScrollSection = () => {
               className="absolute inset-0 bg-cover bg-center"
               style={{ backgroundImage: `url('${moment.image}')` }}
             />
-            <div className="absolute inset-0 bg-gradient-to-br from-violet-600/25 via-indigo-900/25 to-black/55" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-br from-violet-600/10 via-indigo-900/10 to-black/35" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/5 to-transparent" />
 
             <div className="relative z-10 flex h-full flex-col justify-end p-10 text-white sm:p-16">
               <p className="text-xs font-semibold uppercase tracking-[0.25em] text-accent">

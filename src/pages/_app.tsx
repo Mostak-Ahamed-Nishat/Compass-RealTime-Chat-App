@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect } from 'react'
 import type { AppProps } from 'next/app'
+import Head from 'next/head'
 import { Inter, Sora } from 'next/font/google'
 import '@/styles/globals.css'
 
@@ -57,6 +58,9 @@ export default function App({ Component, pageProps }: AppProps) {
 
   return (
     <AuthContext.Provider value={{ currentUser, setCurrentUser, isLoading }}>
+      <Head>
+        <title>Compass — Real-time messaging, reimagined</title>
+      </Head>
       <div className={`${inter.variable} ${sora.variable} contents font-sans`}>
         <Component {...pageProps} />
       </div>

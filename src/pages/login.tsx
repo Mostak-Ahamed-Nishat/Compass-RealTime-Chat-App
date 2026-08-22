@@ -1,4 +1,5 @@
 import React, { useContext, useEffect } from 'react'
+import Head from 'next/head'
 import { useRouter } from 'next/router'
 import { LoginHero } from '@/components/auth/login-hero'
 import { LoginForm } from '@/components/auth/login-form'
@@ -16,19 +17,29 @@ export default function LoginPage() {
 
   if (isLoading || currentUser) {
     return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="text-center">
-          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-primary"></div>
-          <p className="text-secondary">Loading...</p>
+      <>
+        <Head>
+          <title>Log in — Compass</title>
+        </Head>
+        <div className="flex h-screen items-center justify-center">
+          <div className="text-center">
+            <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-primary"></div>
+            <p className="text-secondary">Loading...</p>
+          </div>
         </div>
-      </div>
+      </>
     )
   }
 
   return (
-    <div className="flex min-h-screen flex-col md:flex-row">
-      <LoginHero />
-      <LoginForm onSuccess={setCurrentUser} />
-    </div>
+    <>
+      <Head>
+        <title>Log in — Compass</title>
+      </Head>
+      <div className="flex min-h-screen flex-col md:flex-row">
+        <LoginHero />
+        <LoginForm onSuccess={setCurrentUser} />
+      </div>
+    </>
   )
 }
