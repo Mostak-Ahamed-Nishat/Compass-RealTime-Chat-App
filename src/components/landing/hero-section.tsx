@@ -51,12 +51,18 @@ const NETWORK_LINES = [
 
 const HeroSection = () => {
   const rootRef = React.useRef<HTMLDivElement>(null)
+  const spotlightRef = React.useRef<HTMLDivElement>(null)
   const { label, go, isLoading, isAuthenticated } = useAuthCta()
   const ctaLabel = isAuthenticated ? label : 'Start connecting'
 
   React.useEffect(() => {
     if (!rootRef.current) return
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const hasFinePointer = window.matchMedia('(pointer: fine)').matches
+
+    if (reducedMotion) return
+
+    const cleanupFns: Array<() => void> = []
 
     const ctx = gsap.context(() => {
       gsap
@@ -75,7 +81,9 @@ const HeroSection = () => {
           '-=0.5'
         )
 
-      gsap.utils.toArray<HTMLElement>('[data-hero-card]').forEach((card, index) => {
+      const cards = gsap.utils.toArray<HTMLElement>('[data-hero-card]')
+
+      cards.forEach((card, index) => {
         gsap.to(card, {
           y: '+=14',
           duration: 3.2 + index * 0.4,
@@ -85,9 +93,58 @@ const HeroSection = () => {
           delay: 0.6 + index * 0.3,
         })
       })
+
+      if (hasFinePointer) {
+        gsap.set(spotlightRef.current, { opacity: 1 })
+        gsap.set(cards, { transformPerspective: 800 })
+
+        const tilts = cards.map((card) => ({
+          rotX: gsap.quickTo(card, 'rotateX', { duration: 0.5, ease: 'power3.out' }),
+          rotY: gsap.quickTo(card, 'rotateY', { duration: 0.5, ease: 'power3.out' }),
+        }))
+
+        cards.forEach((card, index) => {
+          const onMove = (event: MouseEvent) => {
+            const rect = card.getBoundingClientRect()
+            const px = (event.clientX - rect.left) / rect.width - 0.5
+            const py = (event.clientY - rect.top) / rect.height - 0.5
+            tilts[index].rotY(px * 16)
+            tilts[index].rotX(-py * 16)
+          }
+          const onLeave = () => {
+            tilts[index].rotY(0)
+            tilts[index].rotX(0)
+          }
+          card.addEventListener('mousemove', onMove)
+          card.addEventListener('mouseleave', onLeave)
+          cleanupFns.push(() => {
+            card.removeEventListener('mousemove', onMove)
+            card.removeEventListener('mouseleave', onLeave)
+          })
+        })
+
+        const moveSpotlight = gsap.quickTo(spotlightRef.current, 'x', {
+          duration: 0.6,
+          ease: 'power3.out',
+        })
+        const moveSpotlightY = gsap.quickTo(spotlightRef.current, 'y', {
+          duration: 0.6,
+          ease: 'power3.out',
+        })
+        const onHeroMove = (event: MouseEvent) => {
+          const rect = rootRef.current!.getBoundingClientRect()
+          moveSpotlight(event.clientX - rect.left)
+          moveSpotlightY(event.clientY - rect.top)
+        }
+        rootRef.current?.addEventListener('mousemove', onHeroMove)
+        cleanupFns.push(() => rootRef.current?.removeEventListener('mousemove', onHeroMove))
+      }
     }, rootRef)
 
-    return () => ctx.revert()
+    return () => {
+      cleanupFns.forEach((fn) => fn())
+      ctx.revert()
+    }
   }, [])
 
   return (
@@ -121,6 +178,12 @@ const HeroSection = () => {
 
       <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[420px] bg-gradient-to-b from-primary/20 via-transparent to-transparent" />
 
+      <div
+        ref={spotlightRef}
+        aria-hidden
+        className="pointer-events-none absolute left-0 top-0 -z-10 h-[560px] w-[560px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/25 opacity-0 blur-3xl"
+      />
+
       <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-16 px-6 lg:grid-cols-[1.05fr_1fr]">
         <div className="max-w-xl">
           <p
@@ -136,7 +199,10 @@ const HeroSection = () => {
             <span data-hero-line className="block">
               The world
             </span>
-            <span data-hero-line className="mt-1 block font-normal italic text-white/40">
+            <span
+              data-hero-line
+              className="gradient-text-animate mt-1 block font-normal italic"
+            >
               in your pocket
             </span>
           </h1>

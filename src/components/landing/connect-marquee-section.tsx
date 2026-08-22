@@ -67,9 +67,18 @@ function MarqueeRow({
 }) {
   const loop = [...items, ...items]
   return (
-    <div className="relative overflow-hidden">
+    <div
+      data-marquee-row
+      className="group relative overflow-hidden"
+      style={{
+        maskImage:
+          'linear-gradient(90deg, transparent, black 8%, black 92%, transparent)',
+        WebkitMaskImage:
+          'linear-gradient(90deg, transparent, black 8%, black 92%, transparent)',
+      }}
+    >
       <div
-        className={`flex w-max items-center gap-3 ${
+        className={`flex w-max items-center gap-3 group-hover:[animation-play-state:paused] ${
           direction === 'left' ? 'animate-marquee-left' : 'animate-marquee-right'
         }`}
       >
@@ -102,7 +111,7 @@ const ConnectMarqueeSection = () => (
         <div
           key={stat.label}
           data-reveal-item
-          className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] p-6"
+          className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] p-6 transition-all duration-300 hover:-translate-y-1 hover:border-white/20 hover:bg-white/[0.06]"
         >
           <stat.icon className={`h-5 w-5 ${stat.tone}`} />
           <p className="mt-4 font-display text-3xl font-extrabold sm:text-4xl">

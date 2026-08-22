@@ -34,7 +34,15 @@ const CursorFollower = () => {
 
     const onOver = (event: MouseEvent) => {
       const target = (event.target as HTMLElement).closest('a, button, [role="button"]')
-      gsap.to(ringRef.current, { scale: target ? 1.8 : 1, duration: 0.25 })
+      gsap.to(ringRef.current, {
+        scale: target ? 1.8 : 1,
+        borderColor: target ? '#fcd34d' : '#5347ac',
+        duration: 0.25,
+      })
+      gsap.to(dotRef.current, {
+        backgroundColor: target ? '#fcd34d' : '#5347ac',
+        duration: 0.25,
+      })
     }
 
     window.addEventListener('mousemove', onMove)
@@ -51,11 +59,11 @@ const CursorFollower = () => {
     <>
       <div
         ref={dotRef}
-        className="pointer-events-none fixed left-0 top-0 z-[60] h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary"
+        className="pointer-events-none fixed left-0 top-0 z-[60] h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary shadow-[0_0_14px_3px_rgba(83,71,172,0.55)]"
       />
       <div
         ref={ringRef}
-        className="pointer-events-none fixed left-0 top-0 z-[60] h-8 w-8 -translate-x-1/2 -translate-y-1/2 rounded-full border border-primary/50"
+        className="pointer-events-none fixed left-0 top-0 z-[60] h-9 w-9 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-primary shadow-[0_0_18px_2px_rgba(83,71,172,0.3)]"
       />
     </>
   )

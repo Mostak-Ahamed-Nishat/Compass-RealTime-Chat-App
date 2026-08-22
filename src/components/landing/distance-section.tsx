@@ -43,6 +43,8 @@ const DistanceSection = () => {
   const themRef = React.useRef<HTMLDivElement>(null)
   const fillRef = React.useRef<HTMLDivElement>(null)
   const numberRef = React.useRef<HTMLSpanElement>(null)
+  const pulseRef = React.useRef<HTMLDivElement>(null)
+  const hasPulsedRef = React.useRef(false)
 
   React.useEffect(() => {
     if (!sectionRef.current) return
@@ -66,6 +68,18 @@ const DistanceSection = () => {
           end: '+=100%',
           scrub: true,
           pin: true,
+          onUpdate: (self) => {
+            if (self.progress > 0.985 && !hasPulsedRef.current) {
+              hasPulsedRef.current = true
+              gsap.fromTo(
+                pulseRef.current,
+                { scale: 0.6, opacity: 0.9 },
+                { scale: 2.4, opacity: 0, duration: 0.7, ease: 'power2.out' }
+              )
+            } else if (self.progress < 0.9) {
+              hasPulsedRef.current = false
+            }
+          },
         },
         defaults: { ease: 'none' },
       })
@@ -105,6 +119,11 @@ const DistanceSection = () => {
         <div
           ref={fillRef}
           className="absolute left-1/2 top-1/2 h-px w-full origin-center -translate-x-1/2 -translate-y-1/2 bg-gradient-to-r from-primary via-white/50 to-accent"
+        />
+        <div
+          ref={pulseRef}
+          aria-hidden
+          className="absolute left-1/2 top-1/2 h-16 w-16 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-accent opacity-0 sm:h-20 sm:w-20"
         />
 
         <div
