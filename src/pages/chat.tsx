@@ -1,7 +1,12 @@
 import React, { useContext, useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import { AuthContext } from './_app'
-import { Sidebar, ChatHeader, MobileTabBar } from '@/components/chat'
+import {
+  Sidebar,
+  ChatHeader,
+  ChatDetailsPanel,
+  MobileTabBar,
+} from '@/components/chat'
 import { auth as tokenStore } from '@/lib/auth'
 import { cn } from '@/lib/utils'
 import type { Conversation } from '@/types'
@@ -49,6 +54,7 @@ export default function ChatPage() {
     string | null
   >(MOCK_CONVERSATIONS[0]?._id ?? null)
   const [mobileView, setMobileView] = useState<'list' | 'thread'>('list')
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false)
 
   useEffect(() => {
     if (!isLoading && !currentUser) {
@@ -64,6 +70,7 @@ export default function ChatPage() {
   const handleSelectConversation = (id: string) => {
     setSelectedConversationId(id)
     setMobileView('thread')
+    setIsDetailsOpen(false)
   }
 
   if (isLoading || !currentUser) {
@@ -114,6 +121,7 @@ export default function ChatPage() {
             <ChatHeader
               conversation={selectedConversation}
               onBack={() => setMobileView('list')}
+              onToggleDetails={() => setIsDetailsOpen((open) => !open)}
             />
             <main className="flex flex-1 items-center justify-center bg-gray-50">
               <p className="text-sm text-secondary">
@@ -129,6 +137,13 @@ export default function ChatPage() {
           </main>
         )}
       </div>
+
+      {selectedConversation && (
+        <ChatDetailsPanel
+          isOpen={isDetailsOpen}
+          onClose={() => setIsDetailsOpen(false)}
+        />
+      )}
     </div>
   )
 }
