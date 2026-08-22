@@ -11,6 +11,7 @@ import {
   MobileTabBar,
 } from '@/components/chat'
 import { auth as tokenStore } from '@/lib/auth'
+import { messages as messagesApi } from '@/lib/api'
 import { cn } from '@/lib/utils'
 import type { Conversation, Message } from '@/types'
 
@@ -61,6 +62,12 @@ export default function ChatPage() {
   const [messagesByConversation, setMessagesByConversation] = useState<
     Record<string, Message[]>
   >({})
+  const [typingConversationId, setTypingConversationId] = useState<
+    string | null
+  >(null)
+  const typingTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(
+    null
+  )
   const reduceMotion = useReducedMotion()
 
   useEffect(() => {
@@ -144,25 +151,74 @@ export default function ChatPage() {
     setSelectedConversationId(id)
     setMobileView('thread')
     setIsDetailsOpen(false)
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)
+    setTypingConversationId(null)
   }
 
-  // TODO: wire to POST /messages once real conversation data is loaded.
-  const handleSendMessage = (text: string) => {
+  const setMessageInConversation = (
+    conversationId: string,
+    tempId: string,
+    updater: (message: Message) => Message
+  ) => {
+    setMessagesByConversation((prev) => ({
+      ...prev,
+      [conversationId]: (prev[conversationId] ?? []).map((m) =>
+        m._id === tempId ? updater(m) : m
+      ),
+    }))
+  }
+
+  const handleSendMessage = async (text: string) => {
     if (!selectedConversationId || !currentUser?._id) return
-    const newMessage: Message = {
-      _id: `local-${Date.now()}`,
-      conversation: selectedConversationId,
+    const conversationId = selectedConversationId
+    const tempId = `local-${Date.now()}`
+
+    const optimisticMessage: Message = {
+      _id: tempId,
+      conversation: conversationId,
       sender: currentUser._id,
       text,
       createdAt: new Date().toISOString(),
+      status: 'sending',
     }
+
     setMessagesByConversation((prev) => ({
       ...prev,
-      [selectedConversationId]: [
-        ...(prev[selectedConversationId] ?? []),
-        newMessage,
-      ],
+      [conversationId]: [...(prev[conversationId] ?? []), optimisticMessage],
     }))
+
+    // Demo only: there's no confirmed socket "typing" event from the API yet,
+    // so this simulates the other side typing back to show the indicator.
+    // Replace with a real `typing` socket listener once that's confirmed.
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)
+    setTypingConversationId(conversationId)
+    typingTimeoutRef.current = setTimeout(() => {
+      setTypingConversationId((current) =>
+        current === conversationId ? null : current
+      )
+    }, 1800)
+
+    try {
+      const response = (await messagesApi.send(conversationId, text)) as
+        | Message
+        | null
+
+      // POST /messages returns 200 with body `null` for a nonexistent
+      // conversationId instead of a 404 — treat that as a failed send.
+      if (!response) {
+        throw new Error('Conversation not found')
+      }
+
+      setMessageInConversation(conversationId, tempId, () => ({
+        ...response,
+        status: undefined,
+      }))
+    } catch {
+      setMessageInConversation(conversationId, tempId, (m) => ({
+        ...m,
+        status: 'failed',
+      }))
+    }
   }
 
   if (isLoading || !currentUser) {
@@ -228,6 +284,7 @@ export default function ChatPage() {
                   conversation={selectedConversation}
                   messages={messagesByConversation[selectedConversation._id] ?? []}
                   currentUserId={currentUser._id}
+                  isOtherTyping={typingConversationId === selectedConversation._id}
                 />
                 <Composer onSend={handleSendMessage} />
               </motion.div>

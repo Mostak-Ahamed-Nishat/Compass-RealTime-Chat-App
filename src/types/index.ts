@@ -11,6 +11,8 @@ export interface Message {
   sender: string
   text: string
   createdAt: string
+  // Client-only, set while an optimistic send is in flight or has failed.
+  status?: 'sending' | 'failed'
 }
 
 export interface ConversationDirect {

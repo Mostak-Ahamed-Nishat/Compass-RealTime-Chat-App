@@ -13,6 +13,8 @@ export interface MessageBubbleProps {
 
 const MessageBubble = ({ message, isOwn, senderName }: MessageBubbleProps) => {
   const shouldReduceMotion = useReducedMotion()
+  const isFailed = message.status === 'failed'
+  const isSending = message.status === 'sending'
 
   return (
     <motion.div
@@ -42,13 +44,24 @@ const MessageBubble = ({ message, isOwn, senderName }: MessageBubbleProps) => {
             'whitespace-pre-wrap break-words rounded-2xl px-4 py-2 text-sm leading-relaxed',
             isOwn
               ? 'rounded-br-md bg-primary text-primary-foreground'
-              : 'rounded-bl-md border border-gray-200 bg-white text-gray-900'
+              : 'rounded-bl-md border border-gray-200 bg-white text-gray-900',
+            isSending && 'opacity-70',
+            isFailed && 'bg-red-50 text-red-700 ring-1 ring-red-200'
           )}
         >
           {message.text}
         </div>
-        <span className="px-1 text-[11px] text-secondary">
-          {formatMessageTime(message.createdAt)}
+        <span
+          className={cn(
+            'px-1 text-[11px]',
+            isFailed ? 'font-medium text-red-500' : 'text-secondary'
+          )}
+        >
+          {isFailed
+            ? 'Failed to send'
+            : isSending
+              ? 'Sending…'
+              : formatMessageTime(message.createdAt)}
         </span>
       </div>
     </motion.div>

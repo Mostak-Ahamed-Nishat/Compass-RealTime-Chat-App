@@ -25,3 +25,7 @@ export {
   EmptyConversation,
   type EmptyConversationProps,
 } from './empty-conversation'
+export {
+  TypingIndicator,
+  type TypingIndicatorProps,
+} from './typing-indicator'
