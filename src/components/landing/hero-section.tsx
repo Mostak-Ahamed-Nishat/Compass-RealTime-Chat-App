@@ -50,7 +50,7 @@ const HeroSection = () => {
           </motion.h1>
 
           <motion.p variants={item} className="mt-5 text-lg leading-relaxed text-secondary">
-            Connectly brings direct messages, group chats, and instant
+            Compass brings direct messages, group chats, and instant
             delivery into one clean, fast space — no refreshing, no waiting,
             no clutter.
           </motion.p>

@@ -26,7 +26,7 @@ const Logo = ({ variant = 'dark', className }: LogoProps) => {
           isLight ? 'text-white' : 'text-gray-900'
         )}
       >
-        Connectly
+        Compass
       </span>
     </div>
   )
