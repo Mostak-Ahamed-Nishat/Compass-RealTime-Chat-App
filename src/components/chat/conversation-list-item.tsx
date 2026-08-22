@@ -1,14 +1,12 @@
 import * as React from 'react'
 import { BellOff } from 'lucide-react'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui'
 import { cn } from '@/lib/utils'
 import {
   formatRelativeTime,
-  getConversationAvatarUser,
-  getConversationInitials,
   getConversationName,
   getConversationSubtitle,
 } from '@/lib/conversation'
+import { ConversationAvatar } from './conversation-avatar'
 import type { Conversation } from '@/types'
 
 export interface ConversationListItemProps {
@@ -26,7 +24,6 @@ const ConversationListItem = ({
   muted = false,
   onClick,
 }: ConversationListItemProps) => {
-  const avatarUser = getConversationAvatarUser(conversation)
   const name = getConversationName(conversation)
   const subtitle = getConversationSubtitle(conversation)
   const timestamp = formatRelativeTime(
@@ -46,10 +43,7 @@ const ConversationListItem = ({
           : 'border-transparent hover:bg-gray-50'
       )}
     >
-      <Avatar className="h-11 w-11 shrink-0">
-        {avatarUser && <AvatarImage alt={name} />}
-        <AvatarFallback>{getConversationInitials(conversation)}</AvatarFallback>
-      </Avatar>
+      <ConversationAvatar name={name} className="shrink-0" />
 
       <div className="min-w-0 flex-1">
         <div className="flex items-baseline justify-between gap-2">

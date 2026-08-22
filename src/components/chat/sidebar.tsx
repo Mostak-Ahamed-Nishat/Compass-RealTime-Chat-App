@@ -1,12 +1,9 @@
 import * as React from 'react'
 import { LogOut, Moon, Plus, Search, Users } from 'lucide-react'
-import { Avatar, AvatarFallback, AvatarImage, Logo } from '@/components/ui'
+import { IconButton, Logo } from '@/components/ui'
 import { cn } from '@/lib/utils'
-import {
-  getConversationAvatarUser,
-  getConversationInitials,
-  getConversationName,
-} from '@/lib/conversation'
+import { getConversationAvatarUser, getConversationName } from '@/lib/conversation'
+import { ConversationAvatar } from './conversation-avatar'
 import { ConversationListItem } from './conversation-list-item'
 import type { Conversation, User } from '@/types'
 
@@ -61,20 +58,8 @@ const Sidebar = ({
       <div className="flex items-center justify-between px-4 py-4">
         <Logo variant="dark" />
         <div className="flex items-center gap-1">
-          <button
-            type="button"
-            aria-label="Contacts"
-            className="flex h-9 w-9 items-center justify-center rounded-full text-secondary transition-colors hover:bg-gray-100"
-          >
-            <Users className="h-5 w-5" />
-          </button>
-          <button
-            type="button"
-            aria-label="Toggle theme"
-            className="flex h-9 w-9 items-center justify-center rounded-full text-secondary transition-colors hover:bg-gray-100"
-          >
-            <Moon className="h-5 w-5" />
-          </button>
+          <IconButton icon={<Users className="h-5 w-5" />} label="Contacts" />
+          <IconButton icon={<Moon className="h-5 w-5" />} label="Toggle theme" />
         </div>
       </div>
 
@@ -94,11 +79,7 @@ const Sidebar = ({
       {recentContacts.length > 0 && (
         <div className="flex gap-4 overflow-x-auto px-4 pb-4">
           <div className="flex shrink-0 flex-col items-center gap-1.5">
-            <Avatar className="h-12 w-12 ring-2 ring-primary ring-offset-2">
-              <AvatarFallback>
-                {currentUser.name.slice(0, 2).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
+            <ConversationAvatar name={currentUser.name} size="lg" ring="primary" />
             <span className="text-xs text-secondary">Me</span>
           </div>
           {recentContacts.map((user) => (
@@ -106,12 +87,7 @@ const Sidebar = ({
               key={user._id}
               className="flex shrink-0 flex-col items-center gap-1.5"
             >
-              <Avatar className="h-12 w-12 ring-2 ring-accent ring-offset-2">
-                <AvatarImage alt={user.name} />
-                <AvatarFallback>
-                  {user.name.slice(0, 2).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
+              <ConversationAvatar name={user.name} size="lg" ring="accent" />
               <span className="max-w-14 truncate text-xs text-secondary">
                 {user.name.split(' ')[0]}
               </span>
@@ -124,13 +100,11 @@ const Sidebar = ({
         <span className="text-xs font-semibold uppercase tracking-wide text-secondary">
           Chats
         </span>
-        <button
-          type="button"
-          aria-label="Start new chat"
-          className="flex h-7 w-7 items-center justify-center rounded-full text-secondary transition-colors hover:bg-gray-100"
-        >
-          <Plus className="h-4 w-4" />
-        </button>
+        <IconButton
+          icon={<Plus className="h-4 w-4" />}
+          label="Start new chat"
+          size="sm"
+        />
       </div>
 
       <div className="flex-1 overflow-y-auto">
@@ -152,11 +126,7 @@ const Sidebar = ({
 
       <div className="flex items-center justify-between border-t border-gray-200 px-4 py-3">
         <div className="flex min-w-0 items-center gap-3">
-          <Avatar className="h-10 w-10">
-            <AvatarFallback>
-              {currentUser.name.slice(0, 2).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
+          <ConversationAvatar name={currentUser.name} />
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold text-gray-900">
               {currentUser.name}
@@ -164,14 +134,11 @@ const Sidebar = ({
             <p className="truncate text-xs text-secondary">{currentUser.phone}</p>
           </div>
         </div>
-        <button
-          type="button"
-          aria-label="Log out"
+        <IconButton
+          icon={<LogOut className="h-5 w-5" />}
+          label="Log out"
           onClick={onLogout}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-secondary transition-colors hover:bg-gray-100"
-        >
-          <LogOut className="h-5 w-5" />
-        </button>
+        />
       </div>
     </aside>
   )

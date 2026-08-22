@@ -130,7 +130,7 @@ const LoginForm = ({ onSuccess }: LoginFormProps) => {
             type="submit"
             size="lg"
             isLoading={isSubmitting}
-            className="group w-full text-base font-semibold"
+            className="group w-full bg-primary text-primary-foreground text-base font-semibold hover:bg-primary-hover"
           >
             Continue
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />

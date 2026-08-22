@@ -10,16 +10,6 @@ export function getConversationAvatarUser(conversation: Conversation): User | nu
   return conversation.type === 'direct' ? conversation.participant : null
 }
 
-export function getConversationInitials(conversation: Conversation): string {
-  const name = getConversationName(conversation)
-  return name
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join('')
-}
-
 export function getConversationSubtitle(conversation: Conversation): string {
   const { lastMessage } = conversation
   if (!lastMessage || !('text' in lastMessage) || !lastMessage.text) {
