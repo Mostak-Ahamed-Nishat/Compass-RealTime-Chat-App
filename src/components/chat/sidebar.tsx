@@ -40,6 +40,7 @@ const Sidebar = ({
   onSelectConversation,
   onLogout,
   onNewChat,
+  onNewGroup,
   onStartUserChat,
   startingUserId,
   isLoading = false,
@@ -116,7 +117,11 @@ const Sidebar = ({
         <Logo variant="dark" />
 
         <div className="hidden items-center gap-1 md:flex">
-          <IconButton icon={<Users className="h-5 w-5" />} label="Contacts" />
+          <IconButton
+            icon={<Users className="h-5 w-5" />}
+            label="New group"
+            onClick={onNewGroup}
+          />
           <IconButton icon={<Moon className="h-5 w-5" />} label="Toggle theme" />
         </div>
 
@@ -128,6 +133,10 @@ const Sidebar = ({
             <ConversationAvatar name={currentUser.name} size="sm" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
+            <DropdownMenuItem onSelect={onNewGroup}>
+              <Users className="h-4 w-4" />
+              New group
+            </DropdownMenuItem>
             <DropdownMenuItem>
               <Moon className="h-4 w-4" />
               Toggle theme
@@ -154,7 +163,13 @@ const Sidebar = ({
       </div>
 
       {recentContacts.length > 0 && (
-        <div className="no-scrollbar flex gap-4 overflow-x-auto px-4 pb-5 pt-2">
+        <div
+          onWheel={(e) => {
+            if (e.deltaY === 0) return
+            e.currentTarget.scrollLeft += e.deltaY
+          }}
+          className="no-scrollbar flex gap-4 overflow-x-auto px-4 pb-5 pt-2"
+        >
           <div className="flex shrink-0 flex-col items-center gap-1.5">
             <ConversationAvatar name={currentUser.name} size="lg" ring="primary" />
             <span className="text-xs text-secondary">Me</span>

@@ -10,12 +10,14 @@ import {
   FileText,
   Image as ImageIcon,
   Link2,
+  LogOut,
   Pin,
   Search,
   Shield,
   Smile,
   Type,
   User,
+  UserMinus,
   X,
 } from 'lucide-react'
 import { IconButton, EmojiPickerComponent } from '@/components/ui'
@@ -32,6 +34,7 @@ export interface ChatDetailsPanelProps {
   onClose: () => void
   conversation: Conversation
   messages: Message[]
+  currentUserId: string
   muted?: boolean
   onToggleMute?: () => void
   nickname?: string
@@ -40,6 +43,10 @@ export interface ChatDetailsPanelProps {
   onSetAccentColor?: (color: string | undefined) => void
   quickEmoji?: string
   onSetQuickEmoji?: (emoji: string | undefined) => void
+  onRemoveParticipant?: (userId: string) => void
+  removingParticipantId?: string | null
+  onLeaveGroup?: () => void
+  isLeavingGroup?: boolean
   className?: string
 }
 
@@ -197,6 +204,7 @@ const ChatDetailsPanel = ({
   onClose,
   conversation,
   messages,
+  currentUserId,
   muted = false,
   onToggleMute,
   nickname,
@@ -205,6 +213,10 @@ const ChatDetailsPanel = ({
   onSetAccentColor,
   quickEmoji,
   onSetQuickEmoji,
+  onRemoveParticipant,
+  removingParticipantId,
+  onLeaveGroup,
+  isLeavingGroup = false,
   className,
 }: ChatDetailsPanelProps) => {
   const shouldReduceMotion = useReducedMotion()
@@ -565,24 +577,50 @@ const ChatDetailsPanel = ({
                       {conversation.participants.length} members
                     </p>
                     <div className="mt-2 space-y-1">
-                      {conversation.participants.map((p) => (
-                        <div
-                          key={p._id}
-                          className="flex items-center gap-3 rounded-xl px-1 py-2"
-                        >
-                          <ConversationAvatar name={p.name} size="sm" />
-                          <span className="flex-1 truncate text-sm text-gray-900">
-                            {p.name}
-                          </span>
-                          {conversation.admins.includes(p._id) && (
-                            <span className="flex items-center gap-1 text-xs font-medium text-primary">
-                              <Shield className="h-3.5 w-3.5" />
-                              Admin
+                      {conversation.participants.map((p) => {
+                        const isSelf = p._id === currentUserId
+                        const isCurrentUserAdmin =
+                          conversation.admins.includes(currentUserId)
+                        const isRemoving = removingParticipantId === p._id
+                        return (
+                          <div
+                            key={p._id}
+                            className="flex items-center gap-3 rounded-xl px-1 py-2"
+                          >
+                            <ConversationAvatar name={p.name} size="sm" />
+                            <span className="flex-1 truncate text-sm text-gray-900">
+                              {isSelf ? `${p.name} (You)` : p.name}
                             </span>
-                          )}
-                        </div>
-                      ))}
+                            {conversation.admins.includes(p._id) && (
+                              <span className="flex items-center gap-1 text-xs font-medium text-primary">
+                                <Shield className="h-3.5 w-3.5" />
+                                Admin
+                              </span>
+                            )}
+                            {isCurrentUserAdmin && !isSelf && (
+                              <IconButton
+                                icon={<UserMinus className="h-4 w-4" />}
+                                label={`Remove ${p.name}`}
+                                size="sm"
+                                disabled={isRemoving}
+                                onClick={() => onRemoveParticipant?.(p._id)}
+                                className="text-red-500 hover:bg-red-50"
+                              />
+                            )}
+                          </div>
+                        )
+                      })}
                     </div>
+
+                    <button
+                      type="button"
+                      onClick={onLeaveGroup}
+                      disabled={isLeavingGroup}
+                      className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 py-2.5 text-sm font-medium text-red-500 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      {isLeavingGroup ? 'Leaving…' : 'Leave group'}
+                    </button>
                   </div>
                 )}
               </div>

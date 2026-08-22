@@ -11,6 +11,7 @@ import {
   MessageList,
   MobileTabBar,
   NewChatDialog,
+  NewGroupDialog,
 } from '@/components/chat'
 import { auth as tokenStore } from '@/lib/auth'
 import {
@@ -41,7 +42,13 @@ export default function ChatPage() {
   const [mobileView, setMobileView] = useState<'list' | 'thread'>('list')
   const [isDetailsOpen, setIsDetailsOpen] = useState(false)
   const [isNewChatOpen, setIsNewChatOpen] = useState(false)
+  const [isNewGroupOpen, setIsNewGroupOpen] = useState(false)
+  const [isCreatingGroup, setIsCreatingGroup] = useState(false)
   const [startingUserId, setStartingUserId] = useState<string | null>(null)
+  const [removingParticipantId, setRemovingParticipantId] = useState<
+    string | null
+  >(null)
+  const [isLeavingGroup, setIsLeavingGroup] = useState(false)
   const [messagesByConversation, setMessagesByConversation] = useState<
     Record<string, Message[]>
   >({})
@@ -278,6 +285,62 @@ export default function ChatPage() {
     }
   }
 
+  const handleCreateGroup = async (name: string, participantIds: string[]) => {
+    setIsCreatingGroup(true)
+    try {
+      const created = (await conversationsApi.createGroup(
+        name,
+        participantIds
+      )) as Conversation
+      setConversations((prev) => [created, ...prev])
+      handleSelectConversation(created._id)
+      setIsNewGroupOpen(false)
+    } catch (err: any) {
+      setConversationsError(err?.error?.message || 'Failed to create group')
+    } finally {
+      setIsCreatingGroup(false)
+    }
+  }
+
+  const handleRemoveParticipant = async (
+    conversationId: string,
+    userId: string
+  ) => {
+    setRemovingParticipantId(userId)
+    try {
+      const updated = (await conversationsApi.removeParticipant(
+        conversationId,
+        userId
+      )) as Conversation
+      setConversations((prev) =>
+        prev.map((c) => (c._id === conversationId ? updated : c))
+      )
+    } catch (err: any) {
+      setConversationsError(
+        err?.error?.message || 'Failed to remove member'
+      )
+    } finally {
+      setRemovingParticipantId(null)
+    }
+  }
+
+  const handleLeaveGroup = async (conversationId: string) => {
+    if (!currentUser?._id) return
+    setIsLeavingGroup(true)
+    try {
+      await conversationsApi.removeParticipant(conversationId, currentUser._id)
+      setConversations((prev) => prev.filter((c) => c._id !== conversationId))
+      setIsDetailsOpen(false)
+      setSelectedConversationId((current) =>
+        current === conversationId ? null : current
+      )
+    } catch (err: any) {
+      setConversationsError(err?.error?.message || 'Failed to leave group')
+    } finally {
+      setIsLeavingGroup(false)
+    }
+  }
+
   // This side only EMITS typing — it never sets local state from its own
   // keystrokes. The indicator only ever renders from a `typing` event this
   // client RECEIVES from someone else's socket (see the listener above).
@@ -426,6 +489,7 @@ export default function ChatPage() {
             onSelectConversation={handleSelectConversation}
             onLogout={handleLogout}
             onNewChat={() => setIsNewChatOpen(true)}
+            onNewGroup={() => setIsNewGroupOpen(true)}
             onStartUserChat={handleSelectUserForNewChat}
             startingUserId={startingUserId}
             isLoading={conversationsLoading}
@@ -518,6 +582,7 @@ export default function ChatPage() {
           onClose={() => setIsDetailsOpen(false)}
           conversation={selectedConversation}
           messages={messagesByConversation[selectedConversation._id] ?? []}
+          currentUserId={currentUser._id}
           muted={mutedConversationIds.has(selectedConversation._id)}
           onToggleMute={() => handleToggleMute(selectedConversation._id)}
           nickname={nicknames[selectedConversation._id]}
@@ -532,6 +597,12 @@ export default function ChatPage() {
           onSetQuickEmoji={(emoji) =>
             handleSetQuickEmoji(selectedConversation._id, emoji)
           }
+          onRemoveParticipant={(userId) =>
+            handleRemoveParticipant(selectedConversation._id, userId)
+          }
+          removingParticipantId={removingParticipantId}
+          onLeaveGroup={() => handleLeaveGroup(selectedConversation._id)}
+          isLeavingGroup={isLeavingGroup}
         />
       )}
 
@@ -540,6 +611,15 @@ export default function ChatPage() {
         onOpenChange={setIsNewChatOpen}
         onSelectUser={handleSelectUserForNewChat}
         startingUserId={startingUserId}
+      />
+
+      <NewGroupDialog
+        open={isNewGroupOpen}
+        onOpenChange={setIsNewGroupOpen}
+        currentUser={currentUser}
+        conversations={conversations}
+        onCreateGroup={handleCreateGroup}
+        isCreating={isCreatingGroup}
       />
     </div>
   )
