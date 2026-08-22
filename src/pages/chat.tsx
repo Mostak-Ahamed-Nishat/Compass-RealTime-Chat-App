@@ -85,7 +85,7 @@ export default function ChatPage() {
 
   useEffect(() => {
     if (!isLoading && !currentUser) {
-      router.push('/')
+      router.push('/login')
     }
   }, [isLoading, currentUser, router])
 
@@ -249,8 +249,8 @@ export default function ChatPage() {
     disconnectSocket()
     tokenStore.clearToken()
     // AuthContext isn't remounted on client-side navigation, so the stale
-    // currentUser must be cleared explicitly — otherwise index.tsx's
-    // "already logged in" redirect immediately bounces back into /chat.
+    // currentUser must be cleared explicitly — otherwise the landing page's
+    // header/CTA would still read as logged in after this redirect.
     setCurrentUser(null)
     router.push('/')
   }

@@ -1,34 +1,30 @@
-import React, { useContext, useEffect } from 'react'
-import { useRouter } from 'next/router'
-import { LoginHero } from '@/components/auth/login-hero'
-import { LoginForm } from '@/components/auth/login-form'
-import { AuthContext } from './_app'
+import React, { useRef } from 'react'
+import {
+  SiteHeader,
+  HeroSection,
+  FeaturesSection,
+  HowItWorksSection,
+  SocialProofSection,
+  FinalCtaSection,
+  SiteFooter,
+  useScrollReveals,
+} from '@/components/landing'
 
-export default function LoginPage() {
-  const router = useRouter()
-  const { currentUser, setCurrentUser, isLoading } = useContext(AuthContext)
-
-  useEffect(() => {
-    if (!isLoading && currentUser) {
-      router.push('/chat')
-    }
-  }, [isLoading, currentUser, router])
-
-  if (isLoading || currentUser) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="text-center">
-          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-primary"></div>
-          <p className="text-secondary">Loading...</p>
-        </div>
-      </div>
-    )
-  }
+export default function LandingPage() {
+  const pageRef = useRef<HTMLDivElement>(null)
+  useScrollReveals(pageRef)
 
   return (
-    <div className="flex min-h-screen flex-col md:flex-row">
-      <LoginHero />
-      <LoginForm onSuccess={setCurrentUser} />
+    <div ref={pageRef} className="min-h-screen bg-white">
+      <SiteHeader />
+      <main>
+        <HeroSection />
+        <FeaturesSection />
+        <HowItWorksSection />
+        <SocialProofSection />
+        <FinalCtaSection />
+      </main>
+      <SiteFooter />
     </div>
   )
 }

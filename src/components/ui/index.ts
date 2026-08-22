@@ -26,3 +26,4 @@ export {
 } from './dropdown-menu'
 export { Separator } from './separator'
 export { Logo, type LogoProps } from './logo'
+export { ConfirmDialog, type ConfirmDialogProps } from './confirm-dialog'

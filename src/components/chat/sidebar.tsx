@@ -125,28 +125,31 @@ const Sidebar = ({
           <IconButton icon={<Moon className="h-5 w-5" />} label="Toggle theme" />
         </div>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            className="rounded-full md:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-            aria-label="Account menu"
-          >
-            <ConversationAvatar name={currentUser.name} size="sm" />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onSelect={onNewGroup}>
-              <Users className="h-4 w-4" />
-              New group
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Moon className="h-4 w-4" />
-              Toggle theme
-            </DropdownMenuItem>
-            <DropdownMenuItem onSelect={onLogout}>
-              <LogOut className="h-4 w-4" />
-              Log out
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="flex items-center gap-1 md:hidden">
+          <IconButton
+            icon={<Users className="h-5 w-5" />}
+            label="New group"
+            onClick={onNewGroup}
+          />
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+              aria-label="Account menu"
+            >
+              <ConversationAvatar name={currentUser.name} size="sm" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem>
+                <Moon className="h-4 w-4" />
+                Toggle theme
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={onLogout}>
+                <LogOut className="h-4 w-4" />
+                Log out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
       <div className="px-4 pb-5">

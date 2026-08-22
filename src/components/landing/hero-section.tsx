@@ -1,12 +1,12 @@
 import * as React from 'react'
-import { motion, useReducedMotion } from 'framer-motion'
+import { motion, useReducedMotion, type Variants } from 'framer-motion'
 import { ArrowRight, Zap } from 'lucide-react'
 import { Button } from '@/components/ui'
 import { CommunityAvatars } from '@/components/auth/community-avatars'
 import { useAuthCta } from './use-auth-cta'
 import { LiveChatPreview } from './live-chat-preview'
 
-const container = {
+const container: Variants = {
   hidden: {},
   show: { transition: { staggerChildren: 0.09, delayChildren: 0.05 } },
 }
@@ -15,7 +15,7 @@ const HeroSection = () => {
   const shouldReduceMotion = useReducedMotion()
   const { label, go, isLoading } = useAuthCta()
 
-  const item = {
+  const item: Variants = {
     hidden: { opacity: 0, y: shouldReduceMotion ? 0 : 16 },
     show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' } },
   }

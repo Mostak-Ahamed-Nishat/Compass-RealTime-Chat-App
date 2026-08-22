@@ -23,7 +23,7 @@ import {
   Video,
   X,
 } from 'lucide-react'
-import { IconButton, EmojiPickerComponent } from '@/components/ui'
+import { IconButton, EmojiPickerComponent, ConfirmDialog } from '@/components/ui'
 import { cn, slugifyHandle } from '@/lib/utils'
 import { getConversationName } from '@/lib/conversation'
 import { extractLinks } from '@/lib/message'
@@ -235,6 +235,9 @@ const ChatDetailsPanel = ({
   const [customizeField, setCustomizeField] = React.useState<CustomizeField>(null)
   const [nicknameDraft, setNicknameDraft] = React.useState(nickname ?? '')
   const [isEditingGroupName, setIsEditingGroupName] = React.useState(false)
+  const [confirmTarget, setConfirmTarget] = React.useState<
+    { type: 'remove'; userId: string; userName: string } | { type: 'leave' } | null
+  >(null)
   const [groupNameDraft, setGroupNameDraft] = React.useState(
     conversation.type === 'group' ? conversation.name : ''
   )
@@ -246,6 +249,7 @@ const ChatDetailsPanel = ({
       setSearchQuery('')
       setCustomizeField(null)
       setIsEditingGroupName(false)
+      setConfirmTarget(null)
     }
   }, [isOpen])
 
@@ -485,7 +489,13 @@ const ChatDetailsPanel = ({
                                 label={`Remove ${p.name}`}
                                 size="sm"
                                 disabled={isRemoving}
-                                onClick={() => onRemoveParticipant?.(p._id)}
+                                onClick={() =>
+                                  setConfirmTarget({
+                                    type: 'remove',
+                                    userId: p._id,
+                                    userName: p.name,
+                                  })
+                                }
                                 className="text-red-500 hover:bg-red-50"
                               />
                             )}
@@ -496,7 +506,7 @@ const ChatDetailsPanel = ({
 
                     <button
                       type="button"
-                      onClick={onLeaveGroup}
+                      onClick={() => setConfirmTarget({ type: 'leave' })}
                       disabled={isLeavingGroup}
                       className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 py-2.5 text-sm font-medium text-red-500 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
                     >
@@ -842,6 +852,36 @@ const ChatDetailsPanel = ({
               </>
             )}
           </div>
+
+          <ConfirmDialog
+            open={confirmTarget !== null}
+            onOpenChange={(open) => {
+              if (!open) setConfirmTarget(null)
+            }}
+            title={
+              confirmTarget?.type === 'remove'
+                ? `Remove ${confirmTarget.userName}?`
+                : 'Leave this group?'
+            }
+            description={
+              confirmTarget?.type === 'remove'
+                ? `${confirmTarget.userName} will be removed from this group and lose access to its messages.`
+                : "You'll stop receiving messages from this group unless someone adds you back."
+            }
+            confirmLabel={confirmTarget?.type === 'remove' ? 'Remove' : 'Leave'}
+            isConfirming={
+              confirmTarget?.type === 'remove'
+                ? removingParticipantId === confirmTarget.userId
+                : isLeavingGroup
+            }
+            onConfirm={() => {
+              if (confirmTarget?.type === 'remove') {
+                onRemoveParticipant?.(confirmTarget.userId)
+              } else if (confirmTarget?.type === 'leave') {
+                onLeaveGroup?.()
+              }
+            }}
+          />
         </motion.aside>
       )}
     </AnimatePresence>
