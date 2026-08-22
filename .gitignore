@@ -12,6 +12,7 @@ package-lock.json
 /.next/
 /out/
 *.rsc
+next-env.d.ts
 
 # Production
 /build
@@ -27,6 +28,8 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+PROGRESS.md
+TODO.md
 
 # Environment variables
 .env

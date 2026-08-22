@@ -15,3 +15,4 @@ export {
 } from './dialog'
 export { ScrollArea, ScrollBar } from './scroll-area'
 export { Separator } from './separator'
+export { Logo, type LogoProps } from './logo'

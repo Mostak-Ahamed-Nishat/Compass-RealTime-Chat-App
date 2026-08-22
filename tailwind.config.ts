@@ -9,9 +9,17 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        primary: '#2563eb',
+        primary: {
+          DEFAULT: '#4f46e5',
+          hover: '#4338ca',
+          active: '#3730a3',
+          foreground: '#ffffff',
+        },
         secondary: '#64748b',
-        accent: '#f97316',
+        accent: {
+          DEFAULT: '#fcd34d',
+          foreground: '#1f2937',
+        },
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],

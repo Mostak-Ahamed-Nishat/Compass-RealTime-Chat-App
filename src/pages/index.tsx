@@ -1,106 +1,15 @@
-import React, { useState, useContext } from 'react'
-import { useRouter } from 'next/router'
-import { Button, Input } from '@/components/ui'
+import React, { useContext } from 'react'
+import { LoginHero } from '@/components/auth/login-hero'
+import { LoginForm } from '@/components/auth/login-form'
 import { AuthContext } from './_app'
 
 export default function LoginPage() {
-  const router = useRouter()
   const { setCurrentUser } = useContext(AuthContext)
-  const [phone, setPhone] = useState('')
-  const [name, setName] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
-    setLoading(true)
-
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/auth/login`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ phone, name }),
-        }
-      )
-
-      if (!response.ok) {
-        throw new Error('Login failed')
-      }
-
-      const { token, user } = await response.json()
-      localStorage.setItem('token', token)
-      setCurrentUser(user)
-      router.push('/chat')
-    } catch (err) {
-      setError('Failed to log in. Please try again.')
-      console.error(err)
-    } finally {
-      setLoading(false)
-    }
-  }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      <div className="bg-white rounded-lg shadow-lg p-8 w-full max-w-md">
-        <h1 className="text-3xl font-bold text-center mb-2 text-gray-900">
-          Compass Chat
-        </h1>
-        <p className="text-center text-gray-600 mb-8">
-          Connect with people instantly
-        </p>
-
-        <form onSubmit={handleLogin} className="space-y-4">
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded text-sm">
-              {error}
-            </div>
-          )}
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Phone Number
-            </label>
-            <Input
-              type="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="+1 (555) 123-4567"
-              disabled={loading}
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Name
-            </label>
-            <Input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Your name"
-              disabled={loading}
-              required
-            />
-          </div>
-
-          <Button
-            type="submit"
-            disabled={loading}
-            className="w-full"
-            size="lg"
-          >
-            {loading ? 'Logging in...' : 'Log In'}
-          </Button>
-        </form>
-
-        <p className="text-center text-gray-600 text-sm mt-6">
-          New here? Sign up with your phone number above.
-        </p>
-      </div>
+    <div className="flex min-h-screen flex-col md:flex-row">
+      <LoginHero />
+      <LoginForm onSuccess={setCurrentUser} />
     </div>
   )
 }

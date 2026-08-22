@@ -191,6 +191,25 @@ Goal: modern, confident, a little unexpected — not a generic SaaS-template lan
 - The chat panel itself should feel alive without being distracting: message send/receive should have a small, fast motion cue (Framer Motion), not a slow flourish — this is the part under closest evaluation, so restraint matters more than spectacle here.
 - Dark mode is a reasonable differentiator for a chat product if time allows; treat it as a stretch, not a requirement.
 
+### Design Tokens (decided — read this instead of re-deriving from screenshots)
+
+The color story and radius scale below are final decisions, wired into `tailwind.config.ts` and the base `ui/` components. Any new screen should consume these tokens rather than raw Tailwind colors (`bg-indigo-600`, `text-amber-300`, etc.) so the look stays consistent and one palette change updates everything.
+
+| Token | Value | Tailwind class | Where it lives |
+|---|---|---|---|
+| `primary` | `#4f46e5` (indigo) | `bg-primary` / `text-primary` | Buttons, focus rings, links, brand mark |
+| `primary-hover` | `#4338ca` | `hover:bg-primary-hover` | Button hover state |
+| `primary-active` | `#3730a3` | `active:bg-primary-active` | Button active state |
+| `primary-foreground` | `#ffffff` | `text-primary-foreground` | Text/icons on a primary-filled surface |
+| `accent` | `#fcd34d` (amber) | `text-accent` / `bg-accent` | Single highlight accent — used sparingly (e.g. one word in a headline, one feature icon) |
+| `secondary` | `#64748b` (slate) | `text-secondary` | Muted/secondary text where gray-500 isn't specific enough |
+
+- **Radius:** `rounded-xl` is the standard corner radius for interactive surfaces — inputs, buttons, cards, avatars use `rounded-full`. Don't mix in `rounded-md`/`rounded-lg` for the same class of element.
+- **Hero photo treatment:** cover image + `bg-gradient-to-br from-violet-600/70 via-indigo-900/75 to-black/90` plus a second `bg-gradient-to-t from-black/70 via-black/10 to-transparent` pass for bottom legibility. Implemented once in [src/components/auth/login-hero.tsx](src/components/auth/login-hero.tsx) — reuse this exact recipe for the Part 2 landing page rather than inventing a new overlay.
+- **Typography:** Inter (already the `sans` stack). Headlines are `font-extrabold`; body copy stays regular weight in gray-500/600.
+- **Avatars:** always use `ui/avatar.tsx` (`Avatar`/`AvatarImage`/`AvatarFallback`, Radix-based) — never hand-roll a circular `div` with initials.
+- **Component reuse convention:** page files should stay thin composition (layout + data), with actual UI broken into `components/ui/*` (generic, reusable anywhere) or `components/<feature>/*` (feature-specific, e.g. `components/auth/*`). See `LoginHero` / `LoginForm` / `CommunityAvatars` / `FeatureCard` / `Logo` for the pattern to follow on later screens (chat, landing).
+
 ---
 
 ## Bonus Ideas (to consider, not committed)

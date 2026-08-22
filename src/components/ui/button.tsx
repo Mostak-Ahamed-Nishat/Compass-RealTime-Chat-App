@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { Slot } from '@radix-ui/react-slot'
+import { Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export interface ButtonProps
@@ -13,6 +14,7 @@ export interface ButtonProps
     | 'ghost'
     | 'link'
   size?: 'default' | 'sm' | 'lg' | 'icon'
+  isLoading?: boolean
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
@@ -22,6 +24,9 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       variant = 'default',
       size = 'default',
       asChild = false,
+      isLoading = false,
+      disabled,
+      children,
       ...props
     },
     ref
@@ -30,9 +35,9 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     return (
       <Comp
         className={cn(
-          'inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
+          'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-medium ring-offset-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
           variant === 'default' &&
-            'bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800',
+            'bg-primary text-primary-foreground hover:bg-primary-hover active:bg-primary-active',
           variant === 'destructive' &&
             'bg-red-600 text-white hover:bg-red-700 active:bg-red-800',
           variant === 'outline' &&
@@ -41,16 +46,20 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
             'bg-gray-100 text-gray-900 hover:bg-gray-200',
           variant === 'ghost' &&
             'hover:bg-gray-100 text-gray-900 active:bg-gray-200',
-          variant === 'link' && 'text-blue-600 underline-offset-4 hover:underline',
+          variant === 'link' && 'text-primary underline-offset-4 hover:underline',
           size === 'default' && 'h-10 px-4 py-2',
-          size === 'sm' && 'h-9 rounded-md px-3 text-xs',
-          size === 'lg' && 'h-11 rounded-md px-8',
+          size === 'sm' && 'h-9 px-3 text-xs',
+          size === 'lg' && 'h-11 px-8',
           size === 'icon' && 'h-10 w-10',
           className
         )}
         ref={ref}
+        disabled={disabled || isLoading}
         {...props}
-      />
+      >
+        {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
+        {children}
+      </Comp>
     )
   }
 )
