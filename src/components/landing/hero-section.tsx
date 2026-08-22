@@ -1,92 +1,188 @@
 import * as React from 'react'
-import { motion, useReducedMotion, type Variants } from 'framer-motion'
-import { ArrowRight, Zap } from 'lucide-react'
+import gsap from 'gsap'
+import { ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui'
-import { CommunityAvatars } from '@/components/auth/community-avatars'
 import { useAuthCta } from './use-auth-cta'
-import { LiveChatPreview } from './live-chat-preview'
 
-const container: Variants = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.09, delayChildren: 0.05 } },
+interface FloatCard {
+  src: string
+  alt: string
+  className: string
 }
 
-const HeroSection = () => {
-  const shouldReduceMotion = useReducedMotion()
-  const { label, go, isLoading } = useAuthCta()
+const FLOAT_CARDS: FloatCard[] = [
+  {
+    src: 'https://images.unsplash.com/photo-1758273706082-392462e9c184?w=640&h=440&fit=crop&auto=format',
+    alt: 'Woman video calling family on her phone',
+    className: 'right-0 top-0 w-[62%] sm:w-[300px]',
+  },
+  {
+    src: 'https://images.unsplash.com/photo-1758525226768-2d1b900ba2c0?w=560&h=400&fit=crop&auto=format',
+    alt: 'Friends sharing a phone screen over coffee',
+    className: 'left-0 top-[36%] w-[58%] sm:w-[270px]',
+  },
+  {
+    src: 'https://images.unsplash.com/photo-1758275557473-6e6359ced762?w=620&h=430&fit=crop&auto=format',
+    alt: 'Group of friends taking a selfie outdoors',
+    className: 'bottom-0 right-[4%] w-[64%] sm:w-[310px]',
+  },
+]
 
-  const item: Variants = {
-    hidden: { opacity: 0, y: shouldReduceMotion ? 0 : 16 },
-    show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' } },
-  }
+const NETWORK_DOTS = [
+  { cx: 480, cy: 90, r: 3 },
+  { cx: 560, cy: 60, r: 2 },
+  { cx: 610, cy: 170, r: 4 },
+  { cx: 520, cy: 240, r: 2 },
+  { cx: 440, cy: 320, r: 3 },
+  { cx: 590, cy: 400, r: 2 },
+  { cx: 470, cy: 470, r: 5 },
+  { cx: 350, cy: 210, r: 2 },
+]
+
+const NETWORK_LINES = [
+  [0, 1],
+  [1, 2],
+  [0, 3],
+  [3, 4],
+  [4, 7],
+  [4, 5],
+  [5, 6],
+]
+
+const HeroSection = () => {
+  const rootRef = React.useRef<HTMLDivElement>(null)
+  const { label, go, isLoading, isAuthenticated } = useAuthCta()
+  const ctaLabel = isAuthenticated ? label : 'Start connecting'
+
+  React.useEffect(() => {
+    if (!rootRef.current) return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+
+    const ctx = gsap.context(() => {
+      gsap
+        .timeline({ defaults: { ease: 'power3.out' } })
+        .from('[data-hero-eyebrow]', { autoAlpha: 0, y: 12, duration: 0.5 })
+        .from(
+          '[data-hero-line]',
+          { autoAlpha: 0, y: 28, duration: 0.7, stagger: 0.12 },
+          '-=0.2'
+        )
+        .from('[data-hero-copy]', { autoAlpha: 0, y: 16, duration: 0.6 }, '-=0.35')
+        .from('[data-hero-cta]', { autoAlpha: 0, y: 16, duration: 0.5 }, '-=0.4')
+        .from(
+          '[data-hero-card]',
+          { autoAlpha: 0, y: 26, scale: 0.94, duration: 0.7, stagger: 0.12 },
+          '-=0.5'
+        )
+
+      gsap.utils.toArray<HTMLElement>('[data-hero-card]').forEach((card, index) => {
+        gsap.to(card, {
+          y: '+=14',
+          duration: 3.2 + index * 0.4,
+          ease: 'sine.inOut',
+          repeat: -1,
+          yoyo: true,
+          delay: 0.6 + index * 0.3,
+        })
+      })
+    }, rootRef)
+
+    return () => ctx.revert()
+  }, [])
 
   return (
     <section
       id="hero"
-      className="relative overflow-hidden bg-white pb-20 pt-16 sm:pb-28 sm:pt-20"
+      ref={rootRef}
+      className="relative isolate min-h-[94vh] overflow-hidden bg-[#080809] pb-14 pt-28 text-white sm:pt-32"
     >
-      <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[560px] bg-gradient-to-b from-primary/5 via-transparent to-transparent" />
+      <svg
+        aria-hidden
+        viewBox="0 0 700 600"
+        className="pointer-events-none absolute inset-y-0 right-0 -z-10 h-full w-[55%] opacity-25"
+        preserveAspectRatio="xMaxYMid slice"
+      >
+        {NETWORK_LINES.map(([a, b]) => (
+          <line
+            key={`${a}-${b}`}
+            x1={NETWORK_DOTS[a].cx}
+            y1={NETWORK_DOTS[a].cy}
+            x2={NETWORK_DOTS[b].cx}
+            y2={NETWORK_DOTS[b].cy}
+            stroke="white"
+            strokeOpacity={0.4}
+            strokeWidth={1}
+          />
+        ))}
+        {NETWORK_DOTS.map((dot, index) => (
+          <circle key={index} cx={dot.cx} cy={dot.cy} r={dot.r} fill="white" />
+        ))}
+      </svg>
+
+      <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[420px] bg-gradient-to-b from-primary/20 via-transparent to-transparent" />
 
       <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-16 px-6 lg:grid-cols-[1.05fr_1fr]">
-        <motion.div
-          variants={container}
-          initial="hidden"
-          animate="show"
-          className="max-w-xl"
-        >
-          <motion.span
-            variants={item}
-            className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary"
+        <div className="max-w-xl">
+          <p
+            data-hero-eyebrow
+            className="flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.2em] text-white/50"
           >
-            <Zap className="h-3.5 w-3.5" />
-            Real-time messaging, reimagined
-          </motion.span>
+            <span className="h-px w-8 bg-white/30" />
+            Real-time human connection
+            <span className="h-px w-8 bg-white/30" />
+          </p>
 
-          <motion.h1
-            variants={item}
-            className="mt-5 font-display text-4xl font-extrabold leading-[1.08] tracking-tight text-gray-900 sm:text-5xl lg:text-[3.25rem]"
-          >
-            Conversations that keep <span className="text-primary">pace</span> with you.
-          </motion.h1>
+          <h1 className="mt-6 font-display text-[3.2rem] font-extrabold leading-[0.95] tracking-tight sm:text-[4rem] lg:text-[4.4rem]">
+            <span data-hero-line className="block">
+              The world
+            </span>
+            <span data-hero-line className="mt-1 block font-normal italic text-white/40">
+              in your pocket
+            </span>
+          </h1>
 
-          <motion.p variants={item} className="mt-5 text-lg leading-relaxed text-secondary">
-            Compass brings direct messages, group chats, and instant
-            delivery into one clean, fast space — no refreshing, no waiting,
-            no clutter.
-          </motion.p>
+          <p data-hero-copy className="mt-6 max-w-md text-lg leading-relaxed text-white/60">
+            Share moments, messages, and presence — with anyone, anywhere, the
+            instant you hit send.
+          </p>
 
-          <motion.div variants={item} className="mt-8 flex flex-wrap items-center gap-3">
+          <div data-hero-cta className="mt-9 flex flex-wrap items-center gap-5">
             <Button
               size="lg"
               onClick={go}
               isLoading={isLoading}
-              className="group text-base font-semibold"
+              className="group bg-white text-base font-semibold text-gray-900 hover:bg-white/90 active:bg-white/80"
             >
-              {label}
+              {ctaLabel}
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
             </Button>
-            <a
-              href="#demo"
-              className="text-sm font-semibold text-gray-600 transition-colors hover:text-gray-900"
+            <span className="text-sm text-white/40">
+              No account. No credit card. Just connect.
+            </span>
+          </div>
+        </div>
+
+        <div className="relative mx-auto h-[360px] w-full max-w-sm sm:h-[440px] sm:max-w-md lg:h-[520px]">
+          {FLOAT_CARDS.map((card) => (
+            <figure
+              key={card.alt}
+              data-hero-card
+              className={`absolute aspect-[16/11] overflow-hidden rounded-2xl border border-white/10 shadow-2xl shadow-black/50 ${card.className}`}
             >
-              Try the live demo ↓
-            </a>
-          </motion.div>
+              <img
+                src={card.src}
+                alt={card.alt}
+                loading="lazy"
+                className="h-full w-full object-cover"
+              />
+            </figure>
+          ))}
+        </div>
+      </div>
 
-          <motion.div variants={item} className="mt-10">
-            <CommunityAvatars />
-          </motion.div>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 24, scale: shouldReduceMotion ? 1 : 0.97 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 0.6, ease: 'easeOut', delay: 0.15 }}
-          id="demo"
-          className="flex justify-center lg:justify-end"
-        >
-          <LiveChatPreview />
-        </motion.div>
+      <div className="mt-16 flex flex-col items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.25em] text-white/30">
+        Scroll
+        <span className="h-8 w-px bg-white/20" />
       </div>
     </section>
   )

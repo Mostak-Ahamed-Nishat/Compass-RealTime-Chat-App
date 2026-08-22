@@ -69,7 +69,7 @@ const FeatureCardTile = ({ icon: Icon, title, description, accent }: Feature) =>
 )
 
 const FeaturesSection = () => (
-  <section id="features" className="bg-gray-50/60 py-24">
+  <section id="features" className="scroll-mt-16 bg-gray-50/60 py-24">
     <div className="mx-auto max-w-6xl px-6">
       <div data-reveal className="max-w-2xl">
         <p className="text-sm font-semibold uppercase tracking-wide text-primary">

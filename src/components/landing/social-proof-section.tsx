@@ -8,7 +8,7 @@ const STATS = [
 ]
 
 const SocialProofSection = () => (
-  <section className="bg-gray-50/60 py-24">
+  <section id="social-proof" className="scroll-mt-16 bg-gray-50/60 py-24">
     <div className="mx-auto max-w-6xl px-6">
       <div data-reveal className="flex flex-col items-center gap-6 text-center">
         <h2 className="font-display text-2xl font-extrabold tracking-tight text-gray-900 sm:text-3xl">

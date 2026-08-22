@@ -20,7 +20,7 @@ const STEPS = [
 ]
 
 const HowItWorksSection = () => (
-  <section id="how-it-works" className="bg-white py-24">
+  <section id="how-it-works" className="scroll-mt-16 bg-white py-24">
     <div className="mx-auto max-w-6xl px-6">
       <div data-reveal className="max-w-2xl">
         <p className="text-sm font-semibold uppercase tracking-wide text-primary">

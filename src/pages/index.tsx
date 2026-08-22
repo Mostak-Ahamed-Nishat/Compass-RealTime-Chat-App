@@ -2,6 +2,10 @@ import React, { useRef } from 'react'
 import {
   SiteHeader,
   HeroSection,
+  ConnectMarqueeSection,
+  DistanceSection,
+  MomentsScrollSection,
+  CursorFollower,
   FeaturesSection,
   HowItWorksSection,
   SocialProofSection,
@@ -16,9 +20,15 @@ export default function LandingPage() {
 
   return (
     <div ref={pageRef} className="min-h-screen bg-white">
+      <CursorFollower />
       <SiteHeader />
       <main>
-        <HeroSection />
+        <div id="dark-intro">
+          <HeroSection />
+          <ConnectMarqueeSection />
+          <DistanceSection />
+          <MomentsScrollSection />
+        </div>
         <FeaturesSection />
         <HowItWorksSection />
         <SocialProofSection />

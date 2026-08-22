@@ -304,7 +304,7 @@ Not needed for this project: `dataviz` (no charts), `keybindings-help`/`update-c
 - [x] Deliberate typography & color palette (not default Tailwind theme)
 - [x] Showcase the actual Part 1 feature, not generic marketing sections
 - [x] GSAP/Framer Motion animation pass
-- [x] One deliberate bonus touch — live, interactive embed of the real chat components in the hero (see [Bonus Ideas](#bonus-ideas-to-consider))
+- [ ] One deliberate bonus touch — the live chat demo embed was removed when the hero was redesigned (2026-08-22, see [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md#design-reasoning-part-2)); currently open
 - [ ] Deploy to live URL
 
 ---
