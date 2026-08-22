@@ -1,5 +1,6 @@
 export { Sidebar, type SidebarProps } from './sidebar'
 export { ChatHeader, type ChatHeaderProps } from './chat-header'
+export { Composer, type ComposerProps } from './composer'
 export {
   ChatDetailsPanel,
   type ChatDetailsPanelProps,

@@ -1,10 +1,12 @@
 import React, { useContext, useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { AuthContext } from './_app'
 import {
   Sidebar,
   ChatHeader,
   ChatDetailsPanel,
+  Composer,
   MobileTabBar,
 } from '@/components/chat'
 import { auth as tokenStore } from '@/lib/auth'
@@ -55,6 +57,7 @@ export default function ChatPage() {
   >(MOCK_CONVERSATIONS[0]?._id ?? null)
   const [mobileView, setMobileView] = useState<'list' | 'thread'>('list')
   const [isDetailsOpen, setIsDetailsOpen] = useState(false)
+  const reduceMotion = useReducedMotion()
 
   useEffect(() => {
     if (!isLoading && !currentUser) {
@@ -71,6 +74,11 @@ export default function ChatPage() {
     setSelectedConversationId(id)
     setMobileView('thread')
     setIsDetailsOpen(false)
+  }
+
+  // TODO: wire to POST /messages once the message list is built.
+  const handleSendMessage = (text: string) => {
+    console.log('send message', text)
   }
 
   if (isLoading || !currentUser) {
@@ -90,52 +98,71 @@ export default function ChatPage() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-white">
-      <div
-        className={cn(
-          'flex-col md:flex md:h-full md:w-auto md:shrink-0',
-          mobileView === 'list' ? 'flex h-full w-full' : 'hidden'
-        )}
-      >
-        <Sidebar
-          currentUser={currentUser}
-          conversations={MOCK_CONVERSATIONS}
-          selectedConversationId={selectedConversationId}
-          onSelectConversation={handleSelectConversation}
-          onLogout={handleLogout}
-        />
-        <MobileTabBar
-          active="chats"
-          onChange={() => {}}
-          className="md:hidden"
-        />
-      </div>
+      <div className="relative h-full w-full overflow-hidden md:contents">
+        <div
+          className={cn(
+            'absolute inset-0 flex h-full w-full flex-col bg-white transition-transform duration-300 ease-in-out md:static md:inset-auto md:h-full md:w-auto md:shrink-0 md:translate-x-0 md:transition-none',
+            mobileView === 'list' ? 'translate-x-0' : '-translate-x-full'
+          )}
+        >
+          <Sidebar
+            currentUser={currentUser}
+            conversations={MOCK_CONVERSATIONS}
+            selectedConversationId={selectedConversationId}
+            onSelectConversation={handleSelectConversation}
+            onLogout={handleLogout}
+          />
+          <MobileTabBar
+            active="chats"
+            onChange={() => {}}
+            className="md:hidden"
+          />
+        </div>
 
-      <div
-        className={cn(
-          'min-w-0 flex-col md:flex md:flex-1',
-          mobileView === 'thread' ? 'flex h-full w-full' : 'hidden'
-        )}
-      >
-        {selectedConversation ? (
-          <>
-            <ChatHeader
-              conversation={selectedConversation}
-              onBack={() => setMobileView('list')}
-              onToggleDetails={() => setIsDetailsOpen((open) => !open)}
-            />
-            <main className="flex flex-1 items-center justify-center bg-gray-50">
-              <p className="text-sm text-secondary">
-                Message list coming soon
-              </p>
-            </main>
-          </>
-        ) : (
-          <main className="flex flex-1 items-center justify-center bg-gray-50">
-            <p className="text-sm text-secondary">
-              Select a conversation to start chatting
-            </p>
-          </main>
-        )}
+        <div
+          className={cn(
+            'absolute inset-0 flex h-full w-full min-w-0 flex-col bg-white transition-transform duration-300 ease-in-out md:static md:inset-auto md:h-full md:flex-1 md:translate-x-0 md:transition-none',
+            mobileView === 'thread' ? 'translate-x-0' : 'translate-x-full'
+          )}
+        >
+          <AnimatePresence mode="wait" initial={false}>
+            {selectedConversation ? (
+              <motion.div
+                key={selectedConversation._id}
+                initial={{ opacity: 0, y: reduceMotion ? 0 : 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.18, ease: 'easeOut' }}
+                className="flex h-full flex-1 flex-col"
+              >
+                <ChatHeader
+                  conversation={selectedConversation}
+                  onBack={() => setMobileView('list')}
+                  onToggleDetails={() => setIsDetailsOpen((open) => !open)}
+                />
+                <main className="flex flex-1 items-center justify-center bg-gray-50">
+                  <p className="text-sm text-secondary">
+                    Message list coming soon
+                  </p>
+                </main>
+                <Composer onSend={handleSendMessage} />
+              </motion.div>
+            ) : (
+              <motion.main
+                key="empty-state"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.18, ease: 'easeOut' }}
+                className="flex flex-1 items-center justify-center bg-gray-50"
+              >
+                <p className="text-sm text-secondary">
+                  Select a conversation to start chatting
+                </p>
+              </motion.main>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
 
       {selectedConversation && (
