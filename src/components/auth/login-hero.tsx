@@ -25,7 +25,7 @@ const LoginHero = () => (
       className="absolute inset-0 bg-cover bg-center"
       style={{ backgroundImage: `url('${HERO_IMAGE_URL}')` }}
     />
-    <div className="absolute inset-0 bg-gradient-to-br from-violet-600/70 via-indigo-900/75 to-black/90" />
+    <div className="absolute inset-0 bg-gradient-to-br from-purple-600/70 via-purple-900/75 to-black/90" />
     <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
 
     <div className="relative z-10 flex h-full flex-col justify-between p-8 lg:p-12">

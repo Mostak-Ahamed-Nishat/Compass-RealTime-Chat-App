@@ -197,18 +197,57 @@ The color story and radius scale below are final decisions, wired into `tailwind
 
 | Token | Value | Tailwind class | Where it lives |
 |---|---|---|---|
-| `primary` | `#4f46e5` (indigo) | `bg-primary` / `text-primary` | Buttons, focus rings, links, brand mark |
-| `primary-hover` | `#4338ca` | `hover:bg-primary-hover` | Button hover state |
-| `primary-active` | `#3730a3` | `active:bg-primary-active` | Button active state |
+| `primary` | `#5347ac` (deep purple) | `bg-primary` / `text-primary` | Buttons, focus rings, links, brand mark |
+| `primary-hover` | `#483a99` | `hover:bg-primary-hover` | Button hover state |
+| `primary-active` | `#3f2f8b` | `active:bg-primary-active` | Button active state |
 | `primary-foreground` | `#ffffff` | `text-primary-foreground` | Text/icons on a primary-filled surface |
 | `accent` | `#fcd34d` (amber) | `text-accent` / `bg-accent` | Single highlight accent — used sparingly (e.g. one word in a headline, one feature icon) |
 | `secondary` | `#64748b` (slate) | `text-secondary` | Muted/secondary text where gray-500 isn't specific enough |
 
 - **Radius:** `rounded-xl` is the standard corner radius for interactive surfaces — inputs, buttons, cards, avatars use `rounded-full`. Don't mix in `rounded-md`/`rounded-lg` for the same class of element.
-- **Hero photo treatment:** cover image + `bg-gradient-to-br from-violet-600/70 via-indigo-900/75 to-black/90` plus a second `bg-gradient-to-t from-black/70 via-black/10 to-transparent` pass for bottom legibility. Implemented once in [src/components/auth/login-hero.tsx](src/components/auth/login-hero.tsx) — reuse this exact recipe for the Part 2 landing page rather than inventing a new overlay.
+- **Hero photo treatment:** cover image + `bg-gradient-to-br from-purple-600/70 via-purple-900/75 to-black/90` plus a second `bg-gradient-to-t from-black/70 via-black/10 to-transparent` pass for bottom legibility. Implemented once in [src/components/auth/login-hero.tsx](src/components/auth/login-hero.tsx) — reuse this exact recipe for the Part 2 landing page rather than inventing a new overlay.
 - **Typography:** Inter (already the `sans` stack). Headlines are `font-extrabold`; body copy stays regular weight in gray-500/600.
 - **Avatars:** always use `ui/avatar.tsx` (`Avatar`/`AvatarImage`/`AvatarFallback`, Radix-based) — never hand-roll a circular `div` with initials.
 - **Component reuse convention:** page files should stay thin composition (layout + data), with actual UI broken into `components/ui/*` (generic, reusable anywhere) or `components/<feature>/*` (feature-specific, e.g. `components/auth/*`). See `LoginHero` / `LoginForm` / `CommunityAvatars` / `FeatureCard` / `Logo` for the pattern to follow on later screens (chat, landing).
+
+---
+
+## UI Reference — Layout Blueprint (structure only, not colors)
+
+The user supplied WhatsApp-style reference screenshots (desktop 3-pane + mobile single-pane) to follow **structurally**. Do not copy its purple/blue palette — apply our own [Design Tokens](#design-tokens-decided--read-this-instead-of-re-deriving-from-screenshots) (indigo primary, amber accent) on top of this layout. Wait for explicit go-ahead before implementing each screen; this section just records the reference so it isn't re-derived later.
+
+**Desktop layout (3-pane, ~1900px reference width):**
+- **Left sidebar (~370px fixed width):**
+  - Header row: app logo + name ("Messages"), plus icon-button cluster top-right (contacts/people icon, theme toggle moon icon).
+  - Search bar below header: pill-shaped, full-width, placeholder "Search or start new chat".
+  - Horizontal "stories"-style avatar row: circular avatars with a colored ring (own avatar labeled "Me" first, then recent contacts) — a quick-access strip above the conversation list, not present in a plain chat app but part of what to replicate.
+  - "CHATS" section label with a `+` icon (new chat) at the right.
+  - Conversation list rows: avatar (with online-status green dot badge), name (bold), preview line (last message text, or media-type label like "📷 Photo", or "No messages yet" for empty), right-aligned metadata (relative timestamp, unread-count pill badge in primary color, mute icon when muted).
+  - Active/selected row gets a highlighted background + left accent border bar.
+  - Bottom-pinned own-profile row: own avatar, name, presence text ("Connected"), logout/switch icon on the right — persistent account footer, not scrolled with the list.
+- **Center pane (message thread):**
+  - Header: contact/group avatar, name, presence line ("Online" in accent-green, or "Last seen recently"), right-aligned action icons (call, video call, info/details toggle).
+  - Optional pinned-message banner directly under the header (pin icon + preview text + "View" link) when a message is pinned.
+  - Date divider ("Today") centered with horizontal rule on both sides.
+  - Message bubbles: incoming left-aligned with sender avatar beside the bubble (white/light bubble), outgoing right-aligned in primary color, no avatar; timestamps small and muted under/inside each bubble; read-receipt checkmarks on own messages.
+  - Rich message content renders inline in bubbles: images (rounded corners, sized to bubble), voice notes (play button + waveform + duration), reactions as a small pill overlapping the bubble corner (emoji + count).
+  - Typing indicator: small animated three-dot bubble with the other person's avatar, appears where their next message would go.
+  - Composer bar (bottom, pinned): mic icon, image/attachment icon, pill-shaped text input with placeholder hint ("Aa  (Enter to send, Shift+Enter for new line)"), emoji icon, and a send button that's a filled circle arrow (appears once there's text) or a thumbs-up quick-react when the field is empty.
+- **Right panel (Chat Details, toggled via the info icon — not always visible):**
+  - Large centered avatar + name + handle at top.
+  - Quick-action icon row (Profile, Mute, Search) directly under the identity block.
+  - Collapsible sections with chevron-expand headers: "Chat info" (pinned messages count), "Customize chat" (change theme, change emoji, edit nickname), "Media, files and links" (Media/Files/Links rows each with a count badge and `>` chevron).
+  - Drilling into "Media" swaps the panel content to a photo grid with a back-chevron + breadcrumb header ("← Media"), not a new overlay.
+
+**Mobile layout (single pane, stack navigation):**
+- Chat list is its own full-screen view (same header/search/story-row/list structure as desktop's sidebar, plus a bottom tab bar: Chats / Contacts / Calls / Settings).
+- Tapping a conversation pushes a full-screen thread view with a back-chevron in the header (replacing the sidebar, not overlaying it) — same header/bubble/composer structure as desktop's center pane, just full-width.
+- No persistent right panel on mobile; details would need to be a pushed screen or bottom sheet if built.
+
+**Key structural takeaways to carry into Compass Chat's actual data model:**
+- The story-style avatar row and right-side "Customize chat"/reactions/voice-notes features are chat-app flavor from the reference product, not part of Compass Chat's assignment scope (no reactions/voice notes/pins in our API) — borrow the *layout skeleton* (3-pane desktop, stack-nav mobile, sidebar structure, bubble/composer arrangement) rather than every feature shown.
+- Our unread-badge, presence text, and "No messages yet" empty state map directly to real API states (`lastMessage: {}`, socket presence if added, etc.) — those pieces should be built for real, not just visually copied.
+- Direct vs. group conversation header differences (single participant with presence vs. group name with member context) should follow this reference's header pattern but branch on our `participant` vs. `participants` shape per the [Conversation models](#key-api-models) above.
 
 ---
 
