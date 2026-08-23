@@ -1,4 +1,4 @@
-# Part 3 — Thought Process & Approach
+# Thought Process & Approach
 
 ## 1. Approach
 
