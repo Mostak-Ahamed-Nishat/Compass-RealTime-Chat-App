@@ -15,10 +15,7 @@ export function useAuthCta() {
   const target = isAuthenticated ? '/chat' : '/login'
   const label = isAuthenticated ? 'Open Dashboard' : 'Get Started Free'
 
-  // Always jump straight to /chat instead of waiting on the auth-restore
-  // check to finish — /chat itself redirects to /login if it turns out
-  // there's no session, so the CTA never has to sit in a loading state.
-  const go = () => router.push('/chat')
+  const go = () => router.push(target)
   const goToLogin = () => router.push('/login')
 
   return { isLoading, isAuthenticated, target, label, go, goToLogin }

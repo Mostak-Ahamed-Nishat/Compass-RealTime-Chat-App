@@ -21,7 +21,6 @@ import {
   messages as messagesApi,
 } from '@/lib/api'
 import { connectSocket, disconnectSocket, getSocket } from '@/lib/socket'
-import { disableDemoMode, isDemoMode } from '@/lib/demo-mode'
 import { getMockPresence, getMockLastSeen } from '@/lib/mock-presence'
 import { useTheme } from '@/lib/theme'
 import { cn } from '@/lib/utils'
@@ -79,14 +78,6 @@ export default function ChatPage() {
   const [accentColors, setAccentColors] = useState<Record<string, string>>({})
   const [quickEmojis, setQuickEmojis] = useState<Record<string, string>>({})
   const typingTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(
-    null
-  )
-  // Demo mode has no live socket and no second real participant, so a
-  // "someone is typing" indicator would never appear otherwise — this
-  // simulates the other side reacting so the indicator itself is
-  // verifiable offline. Real conversations still rely entirely on the
-  // `typing` socket event above/below.
-  const demoTypingStartRef = React.useRef<ReturnType<typeof setTimeout> | null>(
     null
   )
   // handleNewMessage lives inside an effect keyed only on currentUser._id, so
@@ -207,7 +198,6 @@ export default function ChatPage() {
   // against the real API today, not a fake/simulated indicator.
   useEffect(() => {
     if (!currentUser?._id) return
-    if (isDemoMode()) return // no live server to connect to in demo mode
     const token = tokenStore.getToken()
     if (!token) return
     const socket = connectSocket(token)
@@ -290,7 +280,6 @@ export default function ChatPage() {
   const handleLogout = () => {
     disconnectSocket()
     tokenStore.clearToken()
-    disableDemoMode()
     // AuthContext isn't remounted on client-side navigation, so the stale
     // currentUser must be cleared explicitly — otherwise the landing page's
     // header/CTA would still read as logged in after this redirect.
@@ -303,8 +292,6 @@ export default function ChatPage() {
     setMobileView('thread')
     setIsDetailsOpen(false)
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)
-    if (demoTypingStartRef.current) clearTimeout(demoTypingStartRef.current)
-    demoTypingStartRef.current = null
     setTypingConversationId(null)
     setUnreadCounts((prev) => {
       if (!prev[id]) return prev
@@ -432,30 +419,9 @@ export default function ChatPage() {
   // This side only EMITS typing — it never sets local state from its own
   // keystrokes. The indicator only ever renders from a `typing` event this
   // client RECEIVES from someone else's socket (see the listener above).
-  // Demo mode has no live server and no second real participant to emit
-  // that event, so nothing fires here for it — see the send-triggered
-  // simulation below instead, which represents the *other* side reacting,
-  // not an echo of your own typing.
   const handleTyping = () => {
-    if (!selectedConversationId || isDemoMode()) return
+    if (!selectedConversationId) return
     getSocket()?.emit('typing', { conversationId: selectedConversationId })
-  }
-
-  // Demo-only: after you send a message, simulate the contact seeing it and
-  // starting to type back — never in response to your own keystrokes, since
-  // a typing indicator should only ever represent someone else's activity.
-  const simulateDemoTypingReply = (conversationId: string) => {
-    if (demoTypingStartRef.current) clearTimeout(demoTypingStartRef.current)
-    demoTypingStartRef.current = setTimeout(() => {
-      setTypingConversationId(conversationId)
-      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)
-      typingTimeoutRef.current = setTimeout(() => {
-        setTypingConversationId((current) =>
-          current === conversationId ? null : current
-        )
-        demoTypingStartRef.current = null
-      }, 2200)
-    }, 900)
   }
 
   const handleToggleMute = (conversationId: string) => {
@@ -573,7 +539,6 @@ export default function ChatPage() {
         sender: response.sender,
         createdAt: response.createdAt,
       })
-      if (isDemoMode()) simulateDemoTypingReply(conversationId)
     } catch {
       setMessageInConversation(conversationId, tempId, (m) => ({
         ...m,

@@ -1,5 +1,3 @@
-import { demoApi, isDemoMode } from './demo-mode'
-
 const API_BASE = process.env.NEXT_PUBLIC_API_URL
 
 export interface ApiError {
@@ -65,8 +63,6 @@ function getCaseVariants(q: string): string[] {
 
 export const users = {
   search: async (q: string) => {
-    if (isDemoMode()) return demoApi.users.search(q)
-
     const results = await Promise.all(
       getCaseVariants(q).map((variant) =>
         apiCall<any[]>(`/users/search?q=${encodeURIComponent(variant)}`).catch(
@@ -85,30 +81,25 @@ export const users = {
 }
 
 export const conversations = {
-  list: () => (isDemoMode() ? demoApi.conversations.list() : apiCall('/conversations')),
+  list: () => apiCall('/conversations'),
 
   startDirect: (userId: string) =>
-    isDemoMode()
-      ? demoApi.conversations.startDirect(userId)
-      : apiCall('/conversations', {
-          method: 'POST',
-          body: JSON.stringify({ userId }),
-        }),
+    apiCall('/conversations', {
+      method: 'POST',
+      body: JSON.stringify({ userId }),
+    }),
 
   getMessages: (conversationId: string, limit = 20, before?: string) => {
-    if (isDemoMode()) return demoApi.conversations.getMessages(conversationId)
     let url = `/conversations/${conversationId}/messages?limit=${limit}`
     if (before) url += `&before=${before}`
     return apiCall(url)
   },
 
   createGroup: (name: string, participantIds: string[]) =>
-    isDemoMode()
-      ? demoApi.conversations.createGroup(name, participantIds)
-      : apiCall('/conversations/group', {
-          method: 'POST',
-          body: JSON.stringify({ name, participantIds }),
-        }),
+    apiCall('/conversations/group', {
+      method: 'POST',
+      body: JSON.stringify({ name, participantIds }),
+    }),
 
   addParticipants: (conversationId: string, userIds: string[]) =>
     apiCall(`/conversations/${conversationId}/participants`, {
@@ -136,10 +127,8 @@ export const conversations = {
 
 export const messages = {
   send: (conversationId: string, text: string) =>
-    isDemoMode()
-      ? demoApi.messages.send(conversationId, text)
-      : apiCall('/messages', {
-          method: 'POST',
-          body: JSON.stringify({ conversationId, text }),
-        }),
+    apiCall('/messages', {
+      method: 'POST',
+      body: JSON.stringify({ conversationId, text }),
+    }),
 }

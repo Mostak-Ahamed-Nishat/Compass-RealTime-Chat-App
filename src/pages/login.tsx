@@ -15,7 +15,10 @@ export default function LoginPage() {
     }
   }, [isLoading, currentUser, router])
 
-  if (isLoading || currentUser) {
+  // Most visitors here aren't logged in, so the form should render right
+  // away instead of waiting on the auth-restore check. A spinner is only
+  // warranted once we actually know there's a session to bounce away from.
+  if (currentUser) {
     return (
       <>
         <Head>
