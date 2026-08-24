@@ -42,7 +42,16 @@ export function groupMessagesByDay(messages: Message[]): MessageDayGroup[] {
   return groups
 }
 
-const URL_PATTERN = /\bhttps?:\/\/[^\s<>"')]+/gi
+// Images are sent as data URLs riding in the plain-text `text` field — the
+// API has no media/upload endpoint, so this is the only way an image can
+// travel over the real POST /messages + socket pipeline at all.
+const IMAGE_DATA_URL_PATTERN = /^data:image\/[a-z0-9.+-]+;base64,/i
+
+export function isImageMessage(text: string): boolean {
+  return IMAGE_DATA_URL_PATTERN.test(text)
+}
+
+export const URL_PATTERN = /\bhttps?:\/\/[^\s<>"')]+/gi
 
 export interface MessageLink {
   url: string
@@ -54,6 +63,7 @@ export interface MessageLink {
 export function extractLinks(messages: Message[]): MessageLink[] {
   const links: MessageLink[] = []
   for (const message of messages) {
+    if (isImageMessage(message.text)) continue
     const matches = message.text.match(URL_PATTERN)
     if (!matches) continue
     for (const url of matches) {

@@ -31,7 +31,7 @@ const FLOAT_CARDS: FloatCard[] = [
 const HeroSection = () => {
   const rootRef = React.useRef<HTMLDivElement>(null)
   const spotlightRef = React.useRef<HTMLDivElement>(null)
-  const { label, go, isLoading, isAuthenticated } = useAuthCta()
+  const { label, go, isAuthenticated } = useAuthCta()
   const ctaLabel = isAuthenticated ? label : 'Start connecting'
 
   React.useEffect(() => {
@@ -172,7 +172,6 @@ const HeroSection = () => {
             <Button
               size="lg"
               onClick={go}
-              isLoading={isLoading}
               className="group bg-white text-base font-semibold text-gray-900 hover:bg-white/90 active:bg-white/80"
             >
               {ctaLabel}

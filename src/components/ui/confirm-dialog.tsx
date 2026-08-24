@@ -45,7 +45,7 @@ const ConfirmDialog = ({
           <button
             type="button"
             onClick={() => onOpenChange(false)}
-            className="flex h-11 items-center justify-center rounded-xl border border-gray-200 px-4 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 sm:h-10"
+            className="flex h-11 items-center justify-center rounded-xl border border-gray-200 px-4 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-white/10 dark:text-white dark:hover:bg-white/5 sm:h-10"
           >
             {cancelLabel}
           </button>

@@ -27,14 +27,14 @@ const ChatHeader = ({
       : `Last seen ${conversation.participant.lastSeen || 'recently'}`
 
   return (
-    <header className="flex h-[73px] shrink-0 items-center justify-between border-b border-gray-200 bg-white px-4 md:px-6">
+    <header className="flex h-[73px] shrink-0 items-center justify-between border-b border-gray-200 bg-white px-4 dark:border-white/10 dark:bg-[#0b0b12] md:px-6">
       <div className="flex min-w-0 items-center gap-2 md:gap-3">
         {onBack && (
           <button
             type="button"
             aria-label="Back to chats"
             onClick={onBack}
-            className="relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-secondary transition-colors hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer md:hidden"
+            className="relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-secondary transition-colors hover:bg-gray-100 dark:hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer md:hidden"
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
@@ -45,7 +45,7 @@ const ChatHeader = ({
           showPresence={conversation.type === 'direct'}
         />
         <div className="min-w-0">
-          <p className="truncate text-sm font-semibold text-gray-900">{name}</p>
+          <p className="truncate text-sm font-semibold text-gray-900 dark:text-white">{name}</p>
           {subtitle && (
             <div className="flex items-center gap-1.5 truncate text-xs text-secondary">
               {conversation.type === 'direct' && isOnline !== undefined && (

@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef, useCallback } from 'react'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import Lenis from 'lenis'
@@ -10,6 +10,23 @@ import Lenis from 'lenis'
  * `data-reveal`; numbers opt in with `data-counter="1234"`.
  */
 export function useScrollReveals(containerRef: React.RefObject<HTMLElement>) {
+  const lenisRef = useRef<Lenis | null>(null)
+
+  // Nav links need to drive the same Lenis instance the page scroll uses —
+  // calling window.scrollTo directly fights Lenis's own scroll loop and
+  // produces a jump instead of a smooth glide.
+  const scrollTo = useCallback((target: string | HTMLElement) => {
+    const el =
+      typeof target === 'string' ? document.querySelector<HTMLElement>(target) : target
+    if (!el) return
+
+    if (lenisRef.current) {
+      lenisRef.current.scrollTo(el, { offset: -72 })
+    } else {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }, [])
+
   useEffect(() => {
     if (typeof window === 'undefined' || !containerRef.current) return
 
@@ -22,6 +39,7 @@ export function useScrollReveals(containerRef: React.RefObject<HTMLElement>) {
     if (prefersReducedMotion) return
 
     const lenis = new Lenis({ lerp: 0.1, smoothWheel: true })
+    lenisRef.current = lenis
     const onTick = (time: number) => lenis.raf(time * 1000)
     gsap.ticker.add(onTick)
     gsap.ticker.lagSmoothing(0)
@@ -80,6 +98,9 @@ export function useScrollReveals(containerRef: React.RefObject<HTMLElement>) {
       ctx.revert()
       gsap.ticker.remove(onTick)
       lenis.destroy()
+      lenisRef.current = null
     }
   }, [containerRef])
+
+  return { scrollTo }
 }

@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { LogOut, Moon, Plus, Search, Users } from 'lucide-react'
+import { LogOut, Moon, Plus, Search, Sun, Users } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -7,6 +7,7 @@ import {
   DropdownMenuTrigger,
   IconButton,
   Logo,
+  PillTabs,
 } from '@/components/ui'
 import { cn } from '@/lib/utils'
 import { getConversationAvatarUser, getConversationName } from '@/lib/conversation'
@@ -14,6 +15,14 @@ import { users as usersApi } from '@/lib/api'
 import { ConversationAvatar } from './conversation-avatar'
 import { ConversationListItem } from './conversation-list-item'
 import type { Conversation, User } from '@/types'
+
+type ConversationFilterTab = 'all' | 'direct' | 'group'
+
+const FILTER_TABS: { key: ConversationFilterTab; label: string }[] = [
+  { key: 'all', label: 'All' },
+  { key: 'direct', label: 'Messages' },
+  { key: 'group', label: 'Group' },
+]
 
 export interface SidebarProps {
   currentUser: User
@@ -28,10 +37,13 @@ export interface SidebarProps {
   isLoading?: boolean
   loadError?: string | null
   mutedConversationIds?: Set<string>
+  pinnedConversationIds?: Set<string>
   nicknames?: Record<string, string>
   unreadCounts?: Record<string, number>
   typingConversationId?: string | null
   className?: string
+  isDarkTheme?: boolean
+  onToggleTheme?: () => void
 }
 
 const Sidebar = ({
@@ -47,32 +59,52 @@ const Sidebar = ({
   isLoading = false,
   loadError = null,
   mutedConversationIds,
+  pinnedConversationIds,
   nicknames,
   unreadCounts,
   typingConversationId,
   className,
+  isDarkTheme = false,
+  onToggleTheme,
 }: SidebarProps) => {
   const [query, setQuery] = React.useState('')
   const [userResults, setUserResults] = React.useState<User[]>([])
   const [isSearchingUsers, setIsSearchingUsers] = React.useState(false)
+  const [activeTab, setActiveTab] = React.useState<ConversationFilterTab>('all')
 
   const filteredConversations = React.useMemo(() => {
     const q = query.trim().toLowerCase()
-    if (!q) return conversations
-    return conversations.filter((c) => {
-      if (getConversationName(c).toLowerCase().includes(q)) return true
-      if (c.type === 'direct') {
-        return c.participant?.phone?.toLowerCase().includes(q) ?? false
-      }
-      return (
-        c.participants?.some(
-          (p) =>
-            p.name?.toLowerCase().includes(q) ||
-            p.phone?.toLowerCase().includes(q)
-        ) ?? false
-      )
+    const byQuery = !q
+      ? conversations
+      : conversations.filter((c) => {
+          if (getConversationName(c).toLowerCase().includes(q)) return true
+          if (c.type === 'direct') {
+            return c.participant?.phone?.toLowerCase().includes(q) ?? false
+          }
+          return (
+            c.participants?.some(
+              (p) =>
+                p.name?.toLowerCase().includes(q) ||
+                p.phone?.toLowerCase().includes(q)
+            ) ?? false
+          )
+        })
+
+    const byTab =
+      activeTab === 'all'
+        ? byQuery
+        : byQuery.filter((c) => c.type === activeTab)
+
+    // Pinned conversations always float to the top, in their existing
+    // relative order — same convention as WhatsApp/Telegram's "pin chat".
+    if (!pinnedConversationIds?.size) return byTab
+    return [...byTab].sort((a, b) => {
+      const aPinned = pinnedConversationIds.has(a._id)
+      const bPinned = pinnedConversationIds.has(b._id)
+      if (aPinned === bPinned) return 0
+      return aPinned ? -1 : 1
     })
-  }, [conversations, query])
+  }, [conversations, query, activeTab, pinnedConversationIds])
 
   // Search the API for people too, not just local conversations — so
   // "search or start new chat" actually finds someone you haven't messaged yet.
@@ -111,12 +143,12 @@ const Sidebar = ({
   return (
     <aside
       className={cn(
-        'flex min-h-0 w-full flex-1 flex-col bg-white md:h-full md:max-w-[370px] md:shrink-0 md:border-r md:border-gray-200',
+        'flex min-h-0 w-full flex-1 flex-col bg-white dark:bg-[#0b0b12] md:h-full md:max-w-[370px] md:shrink-0 md:border-r md:border-gray-200 dark:md:border-white/10',
         className
       )}
     >
       <div className="flex items-center justify-between px-4 py-4">
-        <Logo variant="dark" />
+        <Logo variant={isDarkTheme ? 'light' : 'dark'} />
 
         <div className="hidden items-center gap-1 md:flex">
           <IconButton
@@ -124,7 +156,17 @@ const Sidebar = ({
             label="New group"
             onClick={onNewGroup}
           />
-          <IconButton icon={<Moon className="h-5 w-5" />} label="Toggle theme" />
+          <IconButton
+            icon={
+              isDarkTheme ? (
+                <Sun className="h-5 w-5" />
+              ) : (
+                <Moon className="h-5 w-5" />
+              )
+            }
+            label="Toggle theme"
+            onClick={onToggleTheme}
+          />
         </div>
 
         <div className="flex items-center gap-1 md:hidden">
@@ -141,8 +183,12 @@ const Sidebar = ({
               <ConversationAvatar name={currentUser.name} size="sm" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem>
-                <Moon className="h-4 w-4" />
+              <DropdownMenuItem onSelect={onToggleTheme}>
+                {isDarkTheme ? (
+                  <Sun className="h-4 w-4" />
+                ) : (
+                  <Moon className="h-4 w-4" />
+                )}
                 Toggle theme
               </DropdownMenuItem>
               <DropdownMenuItem onSelect={onLogout}>
@@ -156,13 +202,13 @@ const Sidebar = ({
 
       <div className="px-4 pb-5">
         <div className="relative">
-          <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+          <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-white/30" />
           <input
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search or start new chat"
-            className="h-10 w-full rounded-full border border-gray-200 bg-gray-50 pl-10 pr-4 text-sm text-gray-900 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="h-10 w-full rounded-full border border-gray-200 bg-gray-50 pl-10 pr-4 text-sm text-gray-900 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-white/30"
           />
         </div>
       </div>
@@ -207,7 +253,11 @@ const Sidebar = ({
         />
       </div>
 
-      <div className="flex-1 overflow-y-auto">
+      <div className="px-4 pb-3">
+        <PillTabs options={FILTER_TABS} value={activeTab} onChange={setActiveTab} />
+      </div>
+
+      <div className="flex-1 overflow-y-auto dark:bg-[#0b0b12]">
         {isLoading ? (
           <p className="px-4 py-8 text-center text-sm text-secondary">
             Loading conversations…
@@ -229,6 +279,7 @@ const Sidebar = ({
               conversation={conversation}
               isActive={conversation._id === selectedConversationId}
               muted={mutedConversationIds?.has(conversation._id)}
+              pinned={pinnedConversationIds?.has(conversation._id)}
               nickname={nicknames?.[conversation._id]}
               unreadCount={unreadCounts?.[conversation._id] ?? 0}
               isTyping={typingConversationId === conversation._id}
@@ -238,7 +289,7 @@ const Sidebar = ({
         )}
 
         {query.trim().length >= 2 && (
-          <div className="border-t border-gray-100 py-2">
+          <div className="border-t border-gray-100 py-2 dark:border-white/10">
             <p className="px-4 pb-1 text-xs font-semibold uppercase tracking-wide text-secondary">
               People
             </p>
@@ -259,11 +310,11 @@ const Sidebar = ({
                     type="button"
                     onClick={() => onStartUserChat?.(user)}
                     disabled={startingUserId === user._id}
-                    className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-gray-50 disabled:opacity-60"
+                    className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-gray-50 disabled:opacity-60 dark:hover:bg-white/5"
                   >
                     <ConversationAvatar name={user.name} size="sm" />
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-semibold text-gray-900">
+                      <p className="truncate text-sm font-semibold text-gray-900 dark:text-white">
                         {user.name}
                       </p>
                       <p className="truncate text-xs text-secondary">
@@ -282,11 +333,11 @@ const Sidebar = ({
         )}
       </div>
 
-      <div className="hidden items-center justify-between border-t border-gray-200 px-4 py-3 md:flex">
+      <div className="hidden items-center justify-between border-t border-gray-200 px-4 py-3 dark:border-white/10 md:flex">
         <div className="flex min-w-0 items-center gap-3">
           <ConversationAvatar name={currentUser.name} />
           <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-gray-900">
+            <p className="truncate text-sm font-semibold text-gray-900 dark:text-white">
               {currentUser.name}
             </p>
             <p className="truncate text-xs text-secondary">{currentUser.phone}</p>

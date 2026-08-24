@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { motion } from 'framer-motion'
-import { BellOff } from 'lucide-react'
+import { BellOff, Pin } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
   formatRelativeTime,
@@ -23,6 +23,7 @@ export interface ConversationListItemProps {
   isActive?: boolean
   unreadCount?: number
   muted?: boolean
+  pinned?: boolean
   nickname?: string
   isTyping?: boolean
   onClick?: () => void
@@ -33,6 +34,7 @@ const ConversationListItem = ({
   isActive = false,
   unreadCount = 0,
   muted = false,
+  pinned = false,
   nickname,
   isTyping = false,
   onClick,
@@ -58,7 +60,10 @@ const ConversationListItem = ({
         'flex w-full items-center gap-3 border-l-2 px-4 py-3 text-left transition-colors',
         isActive
           ? 'border-primary bg-primary/5'
-          : 'border-transparent hover:bg-gray-50'
+          : cn(
+              'border-transparent hover:bg-gray-50 dark:hover:bg-white/5',
+              pinned && 'bg-gray-50/80 dark:bg-white/[0.03]'
+            )
       )}
     >
       <ConversationAvatar
@@ -70,8 +75,11 @@ const ConversationListItem = ({
 
       <div className="min-w-0 flex-1">
         <div className="flex items-baseline justify-between gap-2">
-          <span className="truncate text-sm font-semibold text-gray-900">
-            {name}
+          <span className="flex min-w-0 items-center gap-1.5 truncate text-sm font-semibold text-gray-900 dark:text-white">
+            {pinned && (
+              <Pin className="h-3 w-3 shrink-0 fill-current text-secondary" />
+            )}
+            <span className="truncate">{name}</span>
           </span>
           <span className="shrink-0 text-xs text-secondary">{timestamp}</span>
         </div>

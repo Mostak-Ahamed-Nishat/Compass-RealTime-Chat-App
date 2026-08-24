@@ -34,7 +34,7 @@ const HIGHLIGHTS: Highlight[] = [
  * reference layout mentioned both, but this API doesn't support them.
  */
 const FamilyCloseSection = () => {
-  const { label, go, isLoading, isAuthenticated } = useAuthCta()
+  const { label, go, isAuthenticated } = useAuthCta()
 
   return (
     <section className="relative overflow-hidden bg-[#0b0b12] py-24 text-white">
@@ -85,7 +85,6 @@ const FamilyCloseSection = () => {
             <Button
               size="lg"
               onClick={go}
-              isLoading={isLoading}
               className="group bg-white text-base font-semibold text-gray-900 hover:bg-white/90 active:bg-white/80"
             >
               {isAuthenticated ? label : 'Start a group chat'}

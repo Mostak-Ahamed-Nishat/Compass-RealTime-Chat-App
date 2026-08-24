@@ -19,12 +19,12 @@ import {
 
 export default function LandingPage() {
   const pageRef = useRef<HTMLDivElement>(null)
-  useScrollReveals(pageRef)
+  const { scrollTo } = useScrollReveals(pageRef)
 
   return (
     <div ref={pageRef} className="min-h-screen bg-[#0b0b12]">
       <CursorFollower />
-      <SiteHeader />
+      <SiteHeader onNavigate={scrollTo} />
       <main>
         <HeroSection />
         <ConnectMarqueeSection />

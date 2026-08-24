@@ -65,7 +65,7 @@ const MessageList = ({
     return (
       <div
         className={cn(
-          'flex flex-1 items-center justify-center bg-gray-50',
+          'flex flex-1 items-center justify-center bg-gray-50 dark:bg-[#111118]',
           className
         )}
       >
@@ -78,7 +78,7 @@ const MessageList = ({
     return (
       <div
         className={cn(
-          'flex flex-1 items-center justify-center bg-gray-50 px-6 text-center',
+          'flex flex-1 items-center justify-center bg-gray-50 px-6 text-center dark:bg-[#111118]',
           className
         )}
       >
@@ -100,7 +100,7 @@ const MessageList = ({
     <div
       ref={containerRef}
       onScroll={handleScroll}
-      className={cn('flex-1 overflow-y-auto bg-gray-50 py-2', className)}
+      className={cn('flex-1 overflow-y-auto bg-gray-50 py-2 dark:bg-[#111118]', className)}
     >
       {groups.map((group) => (
         <div key={group.label}>

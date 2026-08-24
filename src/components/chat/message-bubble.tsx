@@ -1,9 +1,11 @@
 import * as React from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import { cn } from '@/lib/utils'
-import { formatMessageTime } from '@/lib/message'
+import { formatMessageTime, isImageMessage } from '@/lib/message'
 import { ReadReceipt } from '@/components/ui'
 import { ConversationAvatar } from './conversation-avatar'
+import { ImageLightbox } from './image-lightbox'
+import { LinkifiedText } from './linkified-text'
 import type { Message } from '@/types'
 
 export interface MessageBubbleProps {
@@ -22,6 +24,8 @@ const MessageBubble = ({
   const shouldReduceMotion = useReducedMotion()
   const isFailed = message.status === 'failed'
   const isSending = message.status === 'sending'
+  const isImage = isImageMessage(message.text)
+  const [isLightboxOpen, setIsLightboxOpen] = React.useState(false)
 
   return (
     <motion.div
@@ -37,7 +41,7 @@ const MessageBubble = ({
 
       <div
         className={cn(
-          'flex max-w-[75%] flex-col gap-1',
+          'flex min-w-0 max-w-[75%] flex-col gap-1',
           isOwn ? 'items-end' : 'items-start'
         )}
       >
@@ -47,17 +51,45 @@ const MessageBubble = ({
           </span>
         )}
         <div
-          style={isOwn && accentColor && !isFailed ? { backgroundColor: accentColor } : undefined}
+          style={
+            isOwn && accentColor && !isFailed && !isImage
+              ? { backgroundColor: accentColor }
+              : undefined
+          }
           className={cn(
-            'whitespace-pre-wrap break-words rounded-2xl px-4 py-2 text-sm leading-relaxed',
+            'overflow-hidden rounded-2xl text-sm leading-relaxed',
+            isImage ? 'p-1' : 'whitespace-pre-wrap break-words px-4 py-2',
             isOwn
-              ? 'rounded-br-md bg-primary text-primary-foreground'
-              : 'rounded-bl-md border border-gray-200 bg-white text-gray-900',
+              ? cn('rounded-br-md', !isImage && 'bg-primary text-primary-foreground')
+              : cn(
+                  'rounded-bl-md border border-gray-200 dark:border-white/10',
+                  !isImage && 'bg-white text-gray-900 dark:bg-[#15151d] dark:text-white'
+                ),
             isSending && 'opacity-70',
-            isFailed && 'bg-red-50 text-red-700 ring-1 ring-red-200'
+            isFailed && !isImage && 'bg-red-50 text-red-700 ring-1 ring-red-200'
           )}
         >
-          {message.text}
+          {isImage ? (
+            <button
+              type="button"
+              onClick={() => setIsLightboxOpen(true)}
+              className="block cursor-pointer transition-opacity hover:opacity-90"
+            >
+              <img
+                src={message.text}
+                alt="Shared image"
+                className="max-h-72 w-full rounded-xl object-cover"
+              />
+            </button>
+          ) : (
+            <LinkifiedText
+              text={message.text}
+              linkClassName={cn(
+                'underline underline-offset-2 hover:opacity-80',
+                isOwn ? 'text-primary-foreground' : 'text-primary'
+              )}
+            />
+          )}
         </div>
         <div className="flex items-center gap-1 px-1">
           <span
@@ -75,6 +107,13 @@ const MessageBubble = ({
           {isOwn && !isFailed && <ReadReceipt sending={isSending} />}
         </div>
       </div>
+
+      {isImage && (
+        <ImageLightbox
+          src={isLightboxOpen ? message.text : null}
+          onClose={() => setIsLightboxOpen(false)}
+        />
+      )}
     </motion.div>
   )
 }

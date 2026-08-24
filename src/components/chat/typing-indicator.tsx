@@ -20,11 +20,11 @@ const TypingIndicator = ({ name }: TypingIndicatorProps) => {
       className="flex items-end gap-2 px-4 py-1"
     >
       <ConversationAvatar name={name} size="sm" />
-      <div className="flex items-center gap-1 rounded-2xl rounded-bl-md border border-gray-200 bg-white px-4 py-3">
+      <div className="flex items-center gap-1 rounded-2xl rounded-bl-md border border-gray-200 bg-white px-4 py-3 dark:border-white/10 dark:bg-[#15151d]">
         {DOTS.map((i) => (
           <motion.span
             key={i}
-            className="h-1.5 w-1.5 rounded-full bg-gray-400"
+            className="h-1.5 w-1.5 rounded-full bg-gray-400 dark:bg-white/40"
             animate={
               shouldReduceMotion
                 ? { opacity: [0.3, 1, 0.3] }

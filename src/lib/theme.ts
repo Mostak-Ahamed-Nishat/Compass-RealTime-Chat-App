@@ -1,3 +1,34 @@
+import * as React from 'react'
+
+const THEME_STORAGE_KEY = 'compass-theme'
+
+// Dark mode follows the landing page's own palette (#0b0b12 background,
+// primary/accent as the only colored accents) rather than a generic
+// inverted-gray theme, so the in-app look stays consistent with Part 2.
+export function useTheme() {
+  const [isDark, setIsDark] = React.useState(false)
+
+  React.useEffect(() => {
+    const stored = window.localStorage.getItem(THEME_STORAGE_KEY)
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+    setIsDark(stored ? stored === 'dark' : prefersDark)
+  }, [])
+
+  React.useEffect(() => {
+    document.documentElement.classList.toggle('dark', isDark)
+  }, [isDark])
+
+  const toggleTheme = React.useCallback(() => {
+    setIsDark((prev) => {
+      const next = !prev
+      window.localStorage.setItem(THEME_STORAGE_KEY, next ? 'dark' : 'light')
+      return next
+    })
+  }, [])
+
+  return { isDark, toggleTheme }
+}
+
 export interface ChatThemeSwatch {
   id: string
   label: string

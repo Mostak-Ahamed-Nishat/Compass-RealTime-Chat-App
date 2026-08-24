@@ -7,6 +7,7 @@ import { ArrowRight, Phone, User as UserIcon } from "lucide-react";
 import { Button, Input, LogoLink } from "@/components/ui";
 import { auth as authApi } from "@/lib/api";
 import { auth as tokenStore } from "@/lib/auth";
+import { enableDemoMode } from "@/lib/demo-mode";
 import { CommunityAvatars } from "./community-avatars";
 import type { User } from "@/types";
 
@@ -46,6 +47,12 @@ const LoginForm = ({ onSuccess }: LoginFormProps) => {
     } catch (err: any) {
       setApiError(err?.error?.message || "Failed to log in. Please try again.");
     }
+  };
+
+  const handleDemoLogin = () => {
+    const user = enableDemoMode();
+    onSuccess(user);
+    router.push("/chat");
   };
 
   return (
@@ -138,6 +145,20 @@ const LoginForm = ({ onSuccess }: LoginFormProps) => {
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
           </Button>
         </form>
+
+        <div className="mt-6 flex items-center gap-3 text-xs text-gray-400">
+          <span className="h-px flex-1 bg-gray-200" />
+          <span>server unreachable?</span>
+          <span className="h-px flex-1 bg-gray-200" />
+        </div>
+
+        <button
+          type="button"
+          onClick={handleDemoLogin}
+          className="mt-4 w-full rounded-xl border border-gray-200 py-3 text-sm font-semibold text-gray-600 transition-colors hover:border-primary hover:text-primary"
+        >
+          Continue with a demo account
+        </button>
 
         <div className="mt-8">
           <CommunityAvatars />

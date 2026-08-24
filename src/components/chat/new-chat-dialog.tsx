@@ -66,11 +66,11 @@ const NewChatDialog = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="overflow-hidden p-0 md:max-w-sm">
-        <DialogHeader className="px-5 pt-5">
+        <DialogHeader className="shrink-0 px-5 pt-5">
           <DialogTitle>New chat</DialogTitle>
         </DialogHeader>
 
-        <div className="px-5 pb-2 pt-3">
+        <div className="shrink-0 px-5 pb-2 pt-3">
           <div className="relative">
             <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
             <input
@@ -83,7 +83,7 @@ const NewChatDialog = ({
           </div>
         </div>
 
-        <div className="max-h-80 overflow-y-auto px-2 pb-4">
+        <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-4">
           {query.trim().length < 2 ? (
             <p className="px-3 py-6 text-center text-sm text-secondary">
               Type at least 2 characters to search

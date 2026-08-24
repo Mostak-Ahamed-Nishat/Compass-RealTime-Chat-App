@@ -32,8 +32,12 @@ const itemVariants: Variants = {
  * footer), so the header just stays a permanent glass panel — no more
  * scroll-driven light/dark swap to track.
  */
-const SiteHeader = () => {
-  const { isLoading, isAuthenticated, label, go, goToLogin } = useAuthCta()
+export interface SiteHeaderProps {
+  onNavigate?: (target: string) => void
+}
+
+const SiteHeader = ({ onNavigate }: SiteHeaderProps = {}) => {
+  const { isAuthenticated, label, go, goToLogin } = useAuthCta()
   const [menuOpen, setMenuOpen] = React.useState(false)
   const shouldReduceMotion = useReducedMotion()
 
@@ -49,6 +53,16 @@ const SiteHeader = () => {
     action()
   }
 
+  const handleNavClick = (href: string) => (event: React.MouseEvent) => {
+    event.preventDefault()
+    setMenuOpen(false)
+    if (onNavigate) {
+      onNavigate(href)
+    } else {
+      document.querySelector(href)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }
+
   return (
     <>
       <header className="fixed inset-x-0 top-0 z-40 border-b border-white/10 bg-[#0b0b12]/70 backdrop-blur-md">
@@ -60,6 +74,7 @@ const SiteHeader = () => {
               <a
                 key={link.href}
                 href={link.href}
+                onClick={handleNavClick(link.href)}
                 className="text-sm font-medium text-white/60 transition-colors hover:text-white"
               >
                 {link.label}
@@ -68,30 +83,24 @@ const SiteHeader = () => {
           </nav>
 
           <div className="hidden items-center gap-2 md:flex">
-            {isLoading ? (
-              <div className="h-9 w-28 animate-pulse rounded-xl bg-white/10" />
-            ) : (
-              <>
-                {!isAuthenticated && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-white hover:bg-white/10 active:bg-white/20"
-                    onClick={goToLogin}
-                  >
-                    Log in
-                  </Button>
-                )}
-                <Button
-                  size="sm"
-                  onClick={go}
-                  className="group bg-white text-gray-900 hover:bg-white/90 active:bg-white/80"
-                >
-                  {isAuthenticated ? label : 'Open app'}
-                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-                </Button>
-              </>
+            {!isAuthenticated && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-white hover:bg-white/10 active:bg-white/20"
+                onClick={goToLogin}
+              >
+                Log in
+              </Button>
             )}
+            <Button
+              size="sm"
+              onClick={go}
+              className="group bg-white text-gray-900 hover:bg-white/90 active:bg-white/80"
+            >
+              {isAuthenticated ? label : 'Open app'}
+              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+            </Button>
           </div>
 
           <button
@@ -152,7 +161,7 @@ const SiteHeader = () => {
                   key={link.href}
                   variants={shouldReduceMotion ? undefined : itemVariants}
                   href={link.href}
-                  onClick={() => setMenuOpen(false)}
+                  onClick={handleNavClick(link.href)}
                   className="group flex items-center gap-3 border-b border-white/10 py-5"
                 >
                   <span className="text-xs font-bold text-white/30">
@@ -172,7 +181,6 @@ const SiteHeader = () => {
               <Button
                 size="lg"
                 onClick={closeAnd(go)}
-                isLoading={isLoading}
                 className="group w-full max-w-xs bg-white text-base font-semibold text-gray-900 hover:bg-white/90 active:bg-white/80"
               >
                 {isAuthenticated ? label : "Start connecting — it's free"}

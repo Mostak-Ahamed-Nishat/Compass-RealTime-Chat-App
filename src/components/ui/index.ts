@@ -2,7 +2,7 @@ export { Button, type ButtonProps } from './button'
 export { IconButton, type IconButtonProps } from './icon-button'
 export { Input, type InputProps } from './input'
 export { Avatar, AvatarImage, AvatarFallback } from './avatar'
-export { EmojiPickerComponent } from './emoji-picker'
+export { EmojiPickerComponent, EmojiPickerGrid } from './emoji-picker'
 export {
   Dialog,
   DialogPortal,
@@ -30,3 +30,4 @@ export { LogoLink, type LogoLinkProps } from './logo-link'
 export { ConfirmDialog, type ConfirmDialogProps } from './confirm-dialog'
 export { PresenceIndicator, type PresenceIndicatorProps } from './presence-indicator'
 export { ReadReceipt, type ReadReceiptProps } from './read-receipt'
+export { PillTabs, type PillTabsProps, type PillTabOption } from './pill-tabs'

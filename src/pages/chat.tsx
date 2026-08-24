@@ -21,7 +21,9 @@ import {
   messages as messagesApi,
 } from '@/lib/api'
 import { connectSocket, disconnectSocket, getSocket } from '@/lib/socket'
+import { disableDemoMode, isDemoMode } from '@/lib/demo-mode'
 import { getMockPresence, getMockLastSeen } from '@/lib/mock-presence'
+import { useTheme } from '@/lib/theme'
 import { cn } from '@/lib/utils'
 import type {
   Conversation,
@@ -69,11 +71,22 @@ export default function ChatPage() {
   const [mutedConversationIds, setMutedConversationIds] = useState<Set<string>>(
     () => new Set()
   )
+  const [pinnedConversationIds, setPinnedConversationIds] = useState<
+    Set<string>
+  >(() => new Set())
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({})
   const [nicknames, setNicknames] = useState<Record<string, string>>({})
   const [accentColors, setAccentColors] = useState<Record<string, string>>({})
   const [quickEmojis, setQuickEmojis] = useState<Record<string, string>>({})
   const typingTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(
+    null
+  )
+  // Demo mode has no live socket and no second real participant, so a
+  // "someone is typing" indicator would never appear otherwise — this
+  // simulates the other side reacting so the indicator itself is
+  // verifiable offline. Real conversations still rely entirely on the
+  // `typing` socket event above/below.
+  const demoTypingStartRef = React.useRef<ReturnType<typeof setTimeout> | null>(
     null
   )
   // handleNewMessage lives inside an effect keyed only on currentUser._id, so
@@ -84,19 +97,7 @@ export default function ChatPage() {
     selectedConversationIdRef.current = selectedConversationId
   }, [selectedConversationId])
   const reduceMotion = useReducedMotion()
-  // Desktop always shows a thread in the center pane, so it's fine to
-  // auto-select the first conversation there. Mobile is single-pane —
-  // auto-selecting would count as "opening" that chat, so it must land on
-  // the chat list instead and only open a thread once the user taps one.
-  const [isDesktop, setIsDesktop] = useState(false)
-
-  useEffect(() => {
-    const mql = window.matchMedia('(min-width: 768px)')
-    setIsDesktop(mql.matches)
-    const handleChange = (e: MediaQueryListEvent) => setIsDesktop(e.matches)
-    mql.addEventListener('change', handleChange)
-    return () => mql.removeEventListener('change', handleChange)
-  }, [])
+  const { isDark, toggleTheme } = useTheme()
 
   useEffect(() => {
     if (!isLoading && !currentUser) {
@@ -128,14 +129,6 @@ export default function ChatPage() {
       cancelled = true
     }
   }, [currentUser?._id])
-
-  // Auto-select the first conversation once the list loads, if none is
-  // selected yet — desktop only, see isDesktop above.
-  useEffect(() => {
-    if (isDesktop && !selectedConversationId && conversations.length > 0) {
-      setSelectedConversationId(conversations[0]._id)
-    }
-  }, [isDesktop, conversations, selectedConversationId])
 
   // Enrich conversations with mock presence data for direct conversations.
   // In a real app, this would come from Socket.io presence events or an API.
@@ -214,6 +207,7 @@ export default function ChatPage() {
   // against the real API today, not a fake/simulated indicator.
   useEffect(() => {
     if (!currentUser?._id) return
+    if (isDemoMode()) return // no live server to connect to in demo mode
     const token = tokenStore.getToken()
     if (!token) return
     const socket = connectSocket(token)
@@ -296,6 +290,7 @@ export default function ChatPage() {
   const handleLogout = () => {
     disconnectSocket()
     tokenStore.clearToken()
+    disableDemoMode()
     // AuthContext isn't remounted on client-side navigation, so the stale
     // currentUser must be cleared explicitly — otherwise the landing page's
     // header/CTA would still read as logged in after this redirect.
@@ -308,6 +303,8 @@ export default function ChatPage() {
     setMobileView('thread')
     setIsDetailsOpen(false)
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)
+    if (demoTypingStartRef.current) clearTimeout(demoTypingStartRef.current)
+    demoTypingStartRef.current = null
     setTypingConversationId(null)
     setUnreadCounts((prev) => {
       if (!prev[id]) return prev
@@ -435,13 +432,43 @@ export default function ChatPage() {
   // This side only EMITS typing — it never sets local state from its own
   // keystrokes. The indicator only ever renders from a `typing` event this
   // client RECEIVES from someone else's socket (see the listener above).
+  // Demo mode has no live server and no second real participant to emit
+  // that event, so nothing fires here for it — see the send-triggered
+  // simulation below instead, which represents the *other* side reacting,
+  // not an echo of your own typing.
   const handleTyping = () => {
-    if (!selectedConversationId) return
+    if (!selectedConversationId || isDemoMode()) return
     getSocket()?.emit('typing', { conversationId: selectedConversationId })
+  }
+
+  // Demo-only: after you send a message, simulate the contact seeing it and
+  // starting to type back — never in response to your own keystrokes, since
+  // a typing indicator should only ever represent someone else's activity.
+  const simulateDemoTypingReply = (conversationId: string) => {
+    if (demoTypingStartRef.current) clearTimeout(demoTypingStartRef.current)
+    demoTypingStartRef.current = setTimeout(() => {
+      setTypingConversationId(conversationId)
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)
+      typingTimeoutRef.current = setTimeout(() => {
+        setTypingConversationId((current) =>
+          current === conversationId ? null : current
+        )
+        demoTypingStartRef.current = null
+      }, 2200)
+    }, 900)
   }
 
   const handleToggleMute = (conversationId: string) => {
     setMutedConversationIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(conversationId)) next.delete(conversationId)
+      else next.add(conversationId)
+      return next
+    })
+  }
+
+  const handleTogglePin = (conversationId: string) => {
+    setPinnedConversationIds((prev) => {
       const next = new Set(prev)
       if (next.has(conversationId)) next.delete(conversationId)
       else next.add(conversationId)
@@ -546,6 +573,7 @@ export default function ChatPage() {
         sender: response.sender,
         createdAt: response.createdAt,
       })
+      if (isDemoMode()) simulateDemoTypingReply(conversationId)
     } catch {
       setMessageInConversation(conversationId, tempId, (m) => ({
         ...m,
@@ -582,11 +610,11 @@ export default function ChatPage() {
       <Head>
         <title>Chat — Compass</title>
       </Head>
-      <div className="flex h-screen overflow-hidden bg-white">
+      <div className="flex h-screen overflow-hidden bg-white dark:bg-[#0b0b12]">
         <div className="relative h-full w-full overflow-hidden md:contents">
         <div
           className={cn(
-            'absolute inset-0 flex h-full w-full flex-col bg-white transition-transform duration-300 ease-in-out md:static md:inset-auto md:h-full md:w-auto md:shrink-0 md:translate-x-0 md:transition-none',
+            'absolute inset-0 flex h-full w-full flex-col bg-white transition-transform duration-300 ease-in-out dark:bg-[#0b0b12] md:static md:inset-auto md:h-full md:w-auto md:shrink-0 md:translate-x-0 md:transition-none',
             mobileView === 'list' ? 'translate-x-0' : '-translate-x-full'
           )}
         >
@@ -603,9 +631,12 @@ export default function ChatPage() {
             isLoading={conversationsLoading}
             loadError={conversationsError}
             mutedConversationIds={mutedConversationIds}
+            pinnedConversationIds={pinnedConversationIds}
             unreadCounts={unreadCounts}
             nicknames={nicknames}
             typingConversationId={typingConversationId}
+            isDarkTheme={isDark}
+            onToggleTheme={toggleTheme}
           />
           <MobileTabBar
             active="chats"
@@ -616,7 +647,7 @@ export default function ChatPage() {
 
         <div
           className={cn(
-            'absolute inset-0 flex h-full w-full min-w-0 flex-col bg-white transition-transform duration-300 ease-in-out md:static md:inset-auto md:h-full md:flex-1 md:translate-x-0 md:transition-none',
+            'absolute inset-0 flex h-full w-full min-w-0 flex-col bg-white transition-transform duration-300 ease-in-out dark:bg-[#0b0b12] md:static md:inset-auto md:h-full md:flex-1 md:translate-x-0 md:transition-none',
             mobileView === 'thread' ? 'translate-x-0' : 'translate-x-full'
           )}
         >
@@ -628,7 +659,7 @@ export default function ChatPage() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.18, ease: 'easeOut' }}
-                className="flex h-full flex-1 flex-col"
+                className="flex h-full min-w-0 flex-1 flex-col"
               >
                 <ChatHeader
                   conversation={selectedConversation}
@@ -698,6 +729,8 @@ export default function ChatPage() {
           currentUserId={currentUser._id}
           muted={mutedConversationIds.has(selectedConversation._id)}
           onToggleMute={() => handleToggleMute(selectedConversation._id)}
+          pinned={pinnedConversationIds.has(selectedConversation._id)}
+          onTogglePin={() => handleTogglePin(selectedConversation._id)}
           nickname={nicknames[selectedConversation._id]}
           onSetNickname={(name) =>
             handleSetNickname(selectedConversation._id, name)

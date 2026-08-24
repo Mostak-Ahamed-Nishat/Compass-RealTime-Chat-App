@@ -4,7 +4,7 @@ import { Button } from '@/components/ui'
 import { useAuthCta } from './use-auth-cta'
 
 const FinalCtaSection = () => {
-  const { label, go, isLoading, isAuthenticated } = useAuthCta()
+  const { label, go, isAuthenticated } = useAuthCta()
 
   return (
     <section className="relative overflow-hidden bg-[#0b0b12] py-32 text-white">
@@ -34,7 +34,6 @@ const FinalCtaSection = () => {
         <Button
           size="lg"
           onClick={go}
-          isLoading={isLoading}
           className="group mt-8 bg-white text-base font-semibold text-gray-900 hover:bg-white/90 active:bg-white/80"
         >
           {isAuthenticated ? label : 'Open Compass — it’s free'}

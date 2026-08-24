@@ -21,7 +21,7 @@ export interface MobileTabBarProps {
 const MobileTabBar = ({ active, onChange, className }: MobileTabBarProps) => (
   <nav
     className={cn(
-      'flex shrink-0 items-center justify-around border-t border-gray-200 bg-white py-2',
+      'flex shrink-0 items-center justify-around border-t border-gray-200 bg-white py-2 dark:border-white/10 dark:bg-[#0b0b12]',
       className
     )}
   >

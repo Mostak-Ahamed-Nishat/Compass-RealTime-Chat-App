@@ -4,6 +4,7 @@ import * as React from 'react'
 import { useState, useRef, useEffect, useCallback, Suspense } from 'react'
 import { createPortal } from 'react-dom'
 import dynamic from 'next/dynamic'
+import { Theme } from 'emoji-picker-react'
 import { Smile } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -24,6 +25,50 @@ const PICKER_WIDTH = 320
 const PICKER_HEIGHT = 400
 const VIEWPORT_MARGIN = 8
 
+// Reads the `dark` class directly (rather than inheriting via CSS) so it
+// works both inside a portal (the popover case) and inline in a modal.
+function useIsDarkTheme(): boolean {
+  const [isDark, setIsDark] = useState(false)
+  useEffect(() => {
+    const root = document.documentElement
+    setIsDark(root.classList.contains('dark'))
+    const observer = new MutationObserver(() =>
+      setIsDark(root.classList.contains('dark'))
+    )
+    observer.observe(root, { attributes: true, attributeFilter: ['class'] })
+    return () => observer.disconnect()
+  }, [])
+  return isDark
+}
+
+export interface EmojiPickerGridProps {
+  onEmojiSelect: (emoji: string) => void
+  width?: number
+  height?: number
+}
+
+/** The bare emoji grid, with no trigger button or popover positioning of
+ * its own — for embedding directly in a modal or any other custom layout. */
+const EmojiPickerGrid = ({
+  onEmojiSelect,
+  width = PICKER_WIDTH,
+  height = PICKER_HEIGHT,
+}: EmojiPickerGridProps) => {
+  const isDark = useIsDarkTheme()
+  return (
+    <Suspense fallback={null}>
+      <EmojiPicker
+        onEmojiClick={(emojiData) => onEmojiSelect(emojiData.emoji)}
+        width={width}
+        height={height}
+        previewConfig={{ showPreview: false }}
+        skinTonesDisabled
+        theme={isDark ? Theme.DARK : Theme.LIGHT}
+      />
+    </Suspense>
+  )
+}
+
 const EmojiPickerComponent = React.forwardRef<
   HTMLButtonElement,
   EmojiPickerComponentProps
@@ -42,8 +87,21 @@ const EmojiPickerComponent = React.forwardRef<
   const [position, setPosition] = useState<{ top: number; left: number } | null>(
     null
   )
+  const [isDark, setIsDark] = useState(false)
   const pickerRef = useRef<HTMLDivElement>(null)
   const buttonRef = useRef<HTMLButtonElement>(null)
+
+  // The picker portals to document.body, outside any themed wrapper, so it
+  // has to read the `dark` class directly rather than inherit it via CSS.
+  useEffect(() => {
+    const root = document.documentElement
+    setIsDark(root.classList.contains('dark'))
+    const observer = new MutationObserver(() =>
+      setIsDark(root.classList.contains('dark'))
+    )
+    observer.observe(root, { attributes: true, attributeFilter: ['class'] })
+    return () => observer.disconnect()
+  }, [])
 
   React.useImperativeHandle(
     forwardedRef,
@@ -142,7 +200,7 @@ const EmojiPickerComponent = React.forwardRef<
               left: position.left,
               zIndex: 60,
             }}
-            className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg"
+            className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg dark:border-white/10"
           >
             <Suspense fallback={null}>
               <EmojiPicker
@@ -151,6 +209,7 @@ const EmojiPickerComponent = React.forwardRef<
                 height={PICKER_HEIGHT}
                 previewConfig={{ showPreview: false }}
                 skinTonesDisabled
+                theme={isDark ? Theme.DARK : Theme.LIGHT}
               />
             </Suspense>
           </div>,
@@ -162,4 +221,4 @@ const EmojiPickerComponent = React.forwardRef<
 
 EmojiPickerComponent.displayName = 'EmojiPicker'
 
-export { EmojiPickerComponent }
+export { EmojiPickerComponent, EmojiPickerGrid }

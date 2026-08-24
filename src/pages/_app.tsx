@@ -3,6 +3,7 @@ import type { AppProps } from 'next/app'
 import Head from 'next/head'
 import { Inter, Sora } from 'next/font/google'
 import '@/styles/globals.css'
+import { isDemoMode, DEMO_USER } from '@/lib/demo-mode'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -27,6 +28,11 @@ export default function App({ Component, pageProps }: AppProps) {
   useEffect(() => {
     const restoreSession = async () => {
       try {
+        if (isDemoMode()) {
+          setCurrentUser(DEMO_USER)
+          return
+        }
+
         const token = localStorage.getItem('token')
         if (token) {
           const response = await fetch(

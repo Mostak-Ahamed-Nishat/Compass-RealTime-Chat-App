@@ -1,4 +1,5 @@
 import type { Conversation, User } from '@/types'
+import { isImageMessage } from '@/lib/message'
 
 // Defensive: at least one endpoint (POST /conversations) has been observed
 // returning a lean/partial document (raw participant id strings, no `type`,
@@ -33,7 +34,7 @@ export function getConversationSubtitle(conversation: Conversation): string {
   if (!lastMessage || !('text' in lastMessage) || !lastMessage.text) {
     return 'No messages yet'
   }
-  return lastMessage.text
+  return isImageMessage(lastMessage.text) ? '📷 Photo' : lastMessage.text
 }
 
 export function formatRelativeTime(iso: string | undefined): string {

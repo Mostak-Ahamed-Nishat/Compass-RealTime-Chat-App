@@ -23,7 +23,16 @@ import {
   Video,
   X,
 } from 'lucide-react'
-import { IconButton, EmojiPickerComponent, ConfirmDialog } from '@/components/ui'
+import {
+  IconButton,
+  EmojiPickerComponent,
+  EmojiPickerGrid,
+  ConfirmDialog,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui'
 import { cn, slugifyHandle } from '@/lib/utils'
 import { getConversationName } from '@/lib/conversation'
 import { extractLinks } from '@/lib/message'
@@ -40,6 +49,8 @@ export interface ChatDetailsPanelProps {
   currentUserId: string
   muted?: boolean
   onToggleMute?: () => void
+  pinned?: boolean
+  onTogglePin?: () => void
   nickname?: string
   onSetNickname?: (nickname: string | undefined) => void
   accentColor?: string
@@ -58,6 +69,10 @@ export interface ChatDetailsPanelProps {
 type SubView = 'root' | 'profile' | 'pinned' | 'media' | 'files' | 'links'
 type CustomizeField = 'theme' | 'emoji' | 'nickname' | null
 
+// md breakpoint (768px) — matches the Tailwind `md:` prefix used everywhere
+// else in this app, so "mobile" here means the same thing it does in CSS.
+const MOBILE_MEDIA_QUERY = '(max-width: 767px)'
+
 const SUBVIEW_TITLES: Record<Exclude<SubView, 'root'>, string> = {
   profile: 'Profile',
   pinned: 'Pinned messages',
@@ -68,7 +83,7 @@ const SUBVIEW_TITLES: Record<Exclude<SubView, 'root'>, string> = {
 
 function Badge({ children }: { children: React.ReactNode }) {
   return (
-    <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-gray-100 px-1.5 text-xs font-medium text-secondary">
+    <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-gray-100 px-1.5 text-xs font-medium text-secondary dark:bg-white/10">
       {children}
     </span>
   )
@@ -83,13 +98,13 @@ function Section({
 }) {
   const [open, setOpen] = React.useState(true)
   return (
-    <div className="border-b border-gray-100">
+    <div className="border-b border-gray-100 dark:border-white/10">
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
         className="flex w-full items-center justify-between px-4 py-3 text-left"
       >
-        <span className="text-sm font-semibold text-gray-900">{title}</span>
+        <span className="text-sm font-semibold text-gray-900 dark:text-white">{title}</span>
         <ChevronDown
           className={cn(
             'h-4 w-4 text-gray-400 transition-transform',
@@ -121,6 +136,7 @@ function Row({
   meta,
   onClick,
   expanded,
+  hideChevron = false,
 }: {
   icon: React.ReactNode
   iconBg: string
@@ -128,12 +144,13 @@ function Row({
   meta?: React.ReactNode
   onClick?: () => void
   expanded?: boolean
+  hideChevron?: boolean
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="flex w-full items-center gap-3 px-4 py-2.5 text-left hover:bg-gray-50"
+      className="flex w-full items-center gap-3 px-4 py-2.5 text-left hover:bg-gray-50 dark:hover:bg-white/5"
     >
       <span
         className={cn(
@@ -143,14 +160,16 @@ function Row({
       >
         {icon}
       </span>
-      <span className="flex-1 truncate text-sm text-gray-900">{label}</span>
+      <span className="flex-1 truncate text-sm text-gray-900 dark:text-white">{label}</span>
       {meta}
-      <ChevronRight
-        className={cn(
-          'h-4 w-4 shrink-0 text-gray-300 transition-transform',
-          expanded && 'rotate-90'
-        )}
-      />
+      {!hideChevron && (
+        <ChevronRight
+          className={cn(
+            'h-4 w-4 shrink-0 text-gray-300 transition-transform',
+            expanded && 'rotate-90'
+          )}
+        />
+      )}
     </button>
   )
 }
@@ -177,7 +196,7 @@ function QuickAction({
           'flex h-11 w-11 items-center justify-center rounded-full border transition-colors',
           active
             ? 'border-primary bg-primary/10 text-primary'
-            : 'border-gray-200 text-secondary hover:bg-gray-50'
+            : 'border-gray-200 text-secondary hover:bg-gray-50 dark:border-white/10 dark:hover:bg-white/5'
         )}
       >
         {icon}
@@ -196,7 +215,7 @@ function SubViewEmptyState({
 }) {
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-2 px-6 py-16 text-center">
-      <span className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 text-gray-400">
+      <span className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 text-gray-400 dark:bg-white/10">
         {icon}
       </span>
       <p className="text-sm text-secondary">{message}</p>
@@ -212,6 +231,8 @@ const ChatDetailsPanel = ({
   currentUserId,
   muted = false,
   onToggleMute,
+  pinned = false,
+  onTogglePin,
   nickname,
   onSetNickname,
   accentColor,
@@ -233,6 +254,7 @@ const ChatDetailsPanel = ({
   const [isSearching, setIsSearching] = React.useState(false)
   const [searchQuery, setSearchQuery] = React.useState('')
   const [customizeField, setCustomizeField] = React.useState<CustomizeField>(null)
+  const [isEmojiModalOpen, setIsEmojiModalOpen] = React.useState(false)
   const [nicknameDraft, setNicknameDraft] = React.useState(nickname ?? '')
   const [isEditingGroupName, setIsEditingGroupName] = React.useState(false)
   const [confirmTarget, setConfirmTarget] = React.useState<
@@ -248,6 +270,7 @@ const ChatDetailsPanel = ({
       setIsSearching(false)
       setSearchQuery('')
       setCustomizeField(null)
+      setIsEmojiModalOpen(false)
       setIsEditingGroupName(false)
       setConfirmTarget(null)
     }
@@ -296,6 +319,18 @@ const ChatDetailsPanel = ({
     setCustomizeField(null)
   }
 
+  // Mobile has no room for a floating popover next to the row, so "Change
+  // emoji" opens as a full modal there; desktop keeps the inline expand +
+  // popover it always had.
+  const handleChangeEmojiClick = () => {
+    const isMobile = window.matchMedia(MOBILE_MEDIA_QUERY).matches
+    if (isMobile) {
+      setIsEmojiModalOpen(true)
+    } else {
+      setCustomizeField((f) => (f === 'emoji' ? null : 'emoji'))
+    }
+  }
+
   const commitGroupName = () => {
     const trimmed = groupNameDraft.trim()
     if (trimmed.length > 0 && conversation.type === 'group') {
@@ -325,11 +360,14 @@ const ChatDetailsPanel = ({
           exit={{ opacity: 0, x: offset }}
           transition={{ duration: 0.2, ease: 'easeOut' }}
           className={cn(
-            'fixed inset-0 z-40 flex h-full w-full flex-col bg-white md:static md:z-auto md:h-full md:w-[320px] md:shrink-0 md:border-l md:border-gray-200',
+            // Always an overlay, never a layout sibling — on desktop it floats
+            // above the thread pane instead of shrinking it (that shrinking is
+            // what was pushing the composer/header into overflow).
+            'fixed inset-y-0 right-0 z-40 flex h-full w-full flex-col bg-white shadow-2xl dark:bg-[#0b0b12] md:w-[320px] md:border-l md:border-gray-200 dark:md:border-white/10',
             className
           )}
         >
-          <div className="flex h-[73px] shrink-0 items-center justify-between border-b border-gray-200 px-4">
+          <div className="flex h-[73px] shrink-0 items-center justify-between border-b border-gray-200 px-4 dark:border-white/10">
             <div className="flex min-w-0 items-center gap-1">
               {view !== 'root' && (
                 <IconButton
@@ -338,7 +376,7 @@ const ChatDetailsPanel = ({
                   onClick={() => setView('root')}
                 />
               )}
-              <span className="truncate text-sm font-semibold text-gray-900">
+              <span className="truncate text-sm font-semibold text-gray-900 dark:text-white">
                 {headerTitle}
               </span>
             </div>
@@ -373,12 +411,12 @@ const ChatDetailsPanel = ({
                           }
                         }}
                         onBlur={commitGroupName}
-                        className="h-8 rounded-full border border-gray-200 bg-gray-50 px-3 text-center text-sm text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                        className="h-8 rounded-full border border-gray-200 bg-gray-50 px-3 text-center text-sm text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary dark:border-white/10 dark:bg-white/5 dark:text-white"
                       />
                     </div>
                   ) : (
                     <div className="mt-3 flex items-center gap-1.5">
-                      <p className="text-base font-semibold text-gray-900">
+                      <p className="text-base font-semibold text-gray-900 dark:text-white">
                         {displayName}
                       </p>
                       {isCurrentUserAdmin && (
@@ -400,6 +438,12 @@ const ChatDetailsPanel = ({
                   <QuickAction icon={<Mic className="h-5 w-5" />} label="Voice" />
                   <QuickAction icon={<Video className="h-5 w-5" />} label="Video" />
                   <QuickAction
+                    icon={<Pin className="h-5 w-5" />}
+                    label={pinned ? 'Unpin' : 'Pin chat'}
+                    active={pinned}
+                    onClick={onTogglePin}
+                  />
+                  <QuickAction
                     icon={<Search className="h-5 w-5" />}
                     label="Search"
                     active={isSearching}
@@ -408,17 +452,17 @@ const ChatDetailsPanel = ({
                 </div>
 
                 {isSearching ? (
-                  <div className="flex flex-1 flex-col border-t border-gray-100">
+                  <div className="flex flex-1 flex-col border-t border-gray-100 dark:border-white/10">
                     <div className="px-4 py-3">
                       <div className="relative">
-                        <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                        <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-white/30" />
                         <input
                           autoFocus
                           type="search"
                           value={searchQuery}
                           onChange={(e) => setSearchQuery(e.target.value)}
                           placeholder="Search in this chat"
-                          className="h-10 w-full rounded-full border border-gray-200 bg-gray-50 pl-10 pr-4 text-sm text-gray-900 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                          className="h-10 w-full rounded-full border border-gray-200 bg-gray-50 pl-10 pr-4 text-sm text-gray-900 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-white/30"
                         />
                       </div>
                     </div>
@@ -435,9 +479,9 @@ const ChatDetailsPanel = ({
                         searchResults.map((m) => (
                           <div
                             key={m._id}
-                            className="rounded-xl px-2 py-2.5 hover:bg-gray-50"
+                            className="rounded-xl px-2 py-2.5 hover:bg-gray-50 dark:hover:bg-white/5"
                           >
-                            <p className="line-clamp-2 text-sm text-gray-900">
+                            <p className="line-clamp-2 text-sm text-gray-900 dark:text-white">
                               {m.text}
                             </p>
                             <p className="mt-0.5 text-xs text-secondary">
@@ -449,9 +493,9 @@ const ChatDetailsPanel = ({
                     </div>
                   </div>
                 ) : (
-                  <div className="border-t border-gray-100 px-4 py-4">
+                  <div className="border-t border-gray-100 px-4 py-4 dark:border-white/10">
                     <div className="flex items-center justify-between pb-2">
-                      <span className="text-sm font-semibold text-gray-900">
+                      <span className="text-sm font-semibold text-gray-900 dark:text-white">
                         Members ({conversation.participants.length})
                       </span>
                       {isCurrentUserAdmin && (
@@ -474,7 +518,7 @@ const ChatDetailsPanel = ({
                             className="flex items-center gap-3 rounded-xl px-1 py-2"
                           >
                             <ConversationAvatar name={p.name} size="sm" />
-                            <span className="flex-1 truncate text-sm text-gray-900">
+                            <span className="flex-1 truncate text-sm text-gray-900 dark:text-white">
                               {isSelf ? `${p.name} (You)` : p.name}
                             </span>
                             {conversation.admins.includes(p._id) && (
@@ -496,7 +540,7 @@ const ChatDetailsPanel = ({
                                     userName: p.name,
                                   })
                                 }
-                                className="text-red-500 hover:bg-red-50"
+                                className="text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10"
                               />
                             )}
                           </div>
@@ -508,7 +552,7 @@ const ChatDetailsPanel = ({
                       type="button"
                       onClick={() => setConfirmTarget({ type: 'leave' })}
                       disabled={isLeavingGroup}
-                      className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 py-2.5 text-sm font-medium text-red-500 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                      className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 py-2.5 text-sm font-medium text-red-500 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-red-500/30 dark:hover:bg-red-500/10"
                     >
                       <LogOut className="h-4 w-4" />
                       {isLeavingGroup ? 'Leaving…' : 'Leave group'}
@@ -526,7 +570,7 @@ const ChatDetailsPanel = ({
                     size="lg"
                     className="h-20 w-20 text-xl"
                   />
-                  <p className="mt-3 text-base font-semibold text-gray-900">
+                  <p className="mt-3 text-base font-semibold text-gray-900 dark:text-white">
                     {displayName}
                   </p>
                   <p className="text-sm text-secondary">{handle}</p>
@@ -551,6 +595,12 @@ const ChatDetailsPanel = ({
                     onClick={onToggleMute}
                   />
                   <QuickAction
+                    icon={<Pin className="h-5 w-5" />}
+                    label={pinned ? 'Unpin' : 'Pin chat'}
+                    active={pinned}
+                    onClick={onTogglePin}
+                  />
+                  <QuickAction
                     icon={<Search className="h-5 w-5" />}
                     label="Search"
                     active={isSearching}
@@ -559,17 +609,17 @@ const ChatDetailsPanel = ({
                 </div>
 
                 {isSearching ? (
-                  <div className="flex flex-1 flex-col border-t border-gray-100">
+                  <div className="flex flex-1 flex-col border-t border-gray-100 dark:border-white/10">
                     <div className="px-4 py-3">
                       <div className="relative">
-                        <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                        <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-white/30" />
                         <input
                           autoFocus
                           type="search"
                           value={searchQuery}
                           onChange={(e) => setSearchQuery(e.target.value)}
                           placeholder="Search in this chat"
-                          className="h-10 w-full rounded-full border border-gray-200 bg-gray-50 pl-10 pr-4 text-sm text-gray-900 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                          className="h-10 w-full rounded-full border border-gray-200 bg-gray-50 pl-10 pr-4 text-sm text-gray-900 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-white/30"
                         />
                       </div>
                     </div>
@@ -586,9 +636,9 @@ const ChatDetailsPanel = ({
                         searchResults.map((m) => (
                           <div
                             key={m._id}
-                            className="rounded-xl px-2 py-2.5 hover:bg-gray-50"
+                            className="rounded-xl px-2 py-2.5 hover:bg-gray-50 dark:hover:bg-white/5"
                           >
-                            <p className="line-clamp-2 text-sm text-gray-900">
+                            <p className="line-clamp-2 text-sm text-gray-900 dark:text-white">
                               {m.text}
                             </p>
                             <p className="mt-0.5 text-xs text-secondary">
@@ -604,7 +654,7 @@ const ChatDetailsPanel = ({
                     <Section title="Chat info">
                       <Row
                         icon={<Pin className="h-4 w-4" />}
-                        iconBg="bg-rose-50 text-rose-500"
+                        iconBg="bg-rose-50 text-rose-500 dark:bg-rose-500/10"
                         label="View pinned messages"
                         meta={<Badge>0</Badge>}
                         onClick={() => setView('pinned')}
@@ -615,7 +665,7 @@ const ChatDetailsPanel = ({
                       <div>
                         <Row
                           icon={<div className="h-4 w-4 rounded-full bg-current" />}
-                          iconBg="bg-blue-50 text-blue-500"
+                          iconBg="bg-blue-50 text-blue-500 dark:bg-blue-500/10"
                           label="Change theme"
                           expanded={customizeField === 'theme'}
                           onClick={() =>
@@ -645,8 +695,8 @@ const ChatDetailsPanel = ({
                                   }
                                   style={{ backgroundColor: swatch.color }}
                                   className={cn(
-                                    'flex h-7 w-7 items-center justify-center rounded-full ring-offset-2 transition-shadow',
-                                    isSelected && 'ring-2 ring-gray-900'
+                                    'flex h-7 w-7 items-center justify-center rounded-full ring-offset-2 transition-shadow dark:ring-offset-[#0b0b12]',
+                                    isSelected && 'ring-2 ring-gray-900 dark:ring-white'
                                   )}
                                 >
                                   {isSelected && (
@@ -662,15 +712,11 @@ const ChatDetailsPanel = ({
                       <div>
                         <Row
                           icon={<Smile className="h-4 w-4" />}
-                          iconBg="bg-amber-50 text-amber-500"
+                          iconBg="bg-amber-50 text-amber-500 dark:bg-amber-500/10"
                           label="Change emoji"
                           meta={<span className="text-base">{quickEmoji ?? '👍'}</span>}
-                          expanded={customizeField === 'emoji'}
-                          onClick={() =>
-                            setCustomizeField((f) =>
-                              f === 'emoji' ? null : 'emoji'
-                            )
-                          }
+                          hideChevron
+                          onClick={handleChangeEmojiClick}
                         />
                         {customizeField === 'emoji' && (
                           <div className="flex items-center gap-3 py-1 pb-3 pl-16 pr-4">
@@ -683,7 +729,7 @@ const ChatDetailsPanel = ({
                               <button
                                 type="button"
                                 onClick={() => onSetQuickEmoji?.(undefined)}
-                                className="text-xs text-secondary hover:text-gray-700 hover:underline"
+                                className="text-xs text-secondary hover:text-gray-700 hover:underline dark:hover:text-white"
                               >
                                 Reset to default
                               </button>
@@ -695,7 +741,7 @@ const ChatDetailsPanel = ({
                       <div>
                         <Row
                           icon={<Type className="h-4 w-4" />}
-                          iconBg="bg-violet-50 text-violet-500"
+                          iconBg="bg-violet-50 text-violet-500 dark:bg-violet-500/10"
                           label="Edit nickname"
                           expanded={customizeField === 'nickname'}
                           onClick={() =>
@@ -716,7 +762,7 @@ const ChatDetailsPanel = ({
                                 if (e.key === 'Escape') setCustomizeField(null)
                               }}
                               placeholder={getConversationName(conversation)}
-                              className="h-9 flex-1 rounded-full border border-gray-200 bg-gray-50 px-3 text-sm text-gray-900 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                              className="h-9 flex-1 rounded-full border border-gray-200 bg-gray-50 px-3 text-sm text-gray-900 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-white/30"
                             />
                             <button
                               type="button"
@@ -733,21 +779,21 @@ const ChatDetailsPanel = ({
                     <Section title="Media, files and links">
                       <Row
                         icon={<ImageIcon className="h-4 w-4" />}
-                        iconBg="bg-emerald-50 text-emerald-500"
+                        iconBg="bg-emerald-50 text-emerald-500 dark:bg-emerald-500/10"
                         label="Media"
                         meta={<Badge>0</Badge>}
                         onClick={() => setView('media')}
                       />
                       <Row
                         icon={<FileText className="h-4 w-4" />}
-                        iconBg="bg-orange-50 text-orange-500"
+                        iconBg="bg-orange-50 text-orange-500 dark:bg-orange-500/10"
                         label="Files"
                         meta={<Badge>0</Badge>}
                         onClick={() => setView('files')}
                       />
                       <Row
                         icon={<Link2 className="h-4 w-4" />}
-                        iconBg="bg-sky-50 text-sky-500"
+                        iconBg="bg-sky-50 text-sky-500 dark:bg-sky-500/10"
                         label="Links"
                         meta={<Badge>{links.length}</Badge>}
                         onClick={() => setView('links')}
@@ -766,18 +812,18 @@ const ChatDetailsPanel = ({
                     size="lg"
                     className="h-24 w-24 text-2xl"
                   />
-                  <p className="mt-3 text-lg font-semibold text-gray-900">
+                  <p className="mt-3 text-lg font-semibold text-gray-900 dark:text-white">
                     {displayName}
                   </p>
                   <p className="text-sm text-secondary">{handle}</p>
                 </div>
 
-                <div className="space-y-3 border-t border-gray-100 px-4 py-4">
+                <div className="space-y-3 border-t border-gray-100 px-4 py-4 dark:border-white/10">
                   <div>
                     <p className="text-xs font-medium uppercase tracking-wide text-secondary">
                       Phone
                     </p>
-                    <p className="mt-0.5 text-sm text-gray-900">
+                    <p className="mt-0.5 text-sm text-gray-900 dark:text-white">
                       {conversation.participant.phone}
                     </p>
                   </div>
@@ -814,7 +860,7 @@ const ChatDetailsPanel = ({
                     message="No links shared yet"
                   />
                 ) : (
-                  <div className="divide-y divide-gray-100">
+                  <div className="divide-y divide-gray-100 dark:divide-white/10">
                     {links.map((link, i) => {
                       let host = link.url
                       try {
@@ -828,9 +874,9 @@ const ChatDetailsPanel = ({
                           href={link.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex items-start gap-3 px-4 py-3 hover:bg-gray-50"
+                          className="flex items-start gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-white/5"
                         >
-                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-sky-50 text-sky-500">
+                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-sky-50 text-sky-500 dark:bg-sky-500/10">
                             <Link2 className="h-4 w-4" />
                           </span>
                           <div className="min-w-0 flex-1">
@@ -882,6 +928,32 @@ const ChatDetailsPanel = ({
               }
             }}
           />
+
+          <Dialog open={isEmojiModalOpen} onOpenChange={setIsEmojiModalOpen}>
+            <DialogContent className="flex items-center md:max-w-sm">
+              <DialogHeader>
+                <DialogTitle>Change quick emoji</DialogTitle>
+              </DialogHeader>
+              <EmojiPickerGrid
+                onEmojiSelect={(emoji) => {
+                  onSetQuickEmoji?.(emoji)
+                  setIsEmojiModalOpen(false)
+                }}
+              />
+              {quickEmoji && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onSetQuickEmoji?.(undefined)
+                    setIsEmojiModalOpen(false)
+                  }}
+                  className="text-sm text-secondary hover:text-gray-700 hover:underline dark:hover:text-white"
+                >
+                  Reset to default
+                </button>
+              )}
+            </DialogContent>
+          </Dialog>
         </motion.aside>
       )}
     </AnimatePresence>
