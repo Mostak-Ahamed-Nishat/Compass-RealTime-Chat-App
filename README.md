@@ -33,6 +33,7 @@ The landing page (`/`) is a separate, from-scratch design pass built to showcase
 ## Screenshots & Features
 
 ### Desktop Experience
+![Desktop Chat with Messages](./public/screenshots/01-desktop-chat.png)
 - **3-pane layout** — chat list on the left, conversation thread in the center, optional details panel on the right
 - **Direct conversations** with online/offline presence indicators and read receipts (✓ sent, ✓✓ read)
 - **Group conversations** with member management and real-time updates
@@ -40,13 +41,25 @@ The landing page (`/`) is a separate, from-scratch design pass built to showcase
 - **Auto-scroll** — follows new messages unless you've scrolled up to read history
 - **Real-time delivery** — Socket.io-powered instant message delivery and conversation updates
 
+![Desktop Empty State](./public/screenshots/02-desktop-empty-state.png)
+
+### Login & Authentication
+![Login Page](./public/screenshots/03-desktop-login.png)
+- Sign in with **phone number + name only** (no password needed)
+- Auto-register new phone numbers
+- Session restore on refresh
+
 ### Mobile Experience
+![Mobile Landing Page](./public/screenshots/04-mobile-landing.png)
+![Mobile Group Chat](./public/screenshots/05-mobile-group-chat.png)
+![Mobile Chat List](./public/screenshots/06-mobile-chat-list.png)
 - **Single-pane stack navigation** — tap a conversation to open the thread, back button to return to chat list
 - **Touch-optimized composer** — emoji picker, send button, and message input designed for mobile
 - **Responsive UI** — all features work seamlessly on small screens
 - **Quick contact row** — favorite/recent contacts as avatar chips for quick access
 
 ### Landing Page
+![Landing Page Hero](./public/screenshots/07-mobile-landing-hero.png)
 - **Modern hero section** — dark theme with floating image cards and interactive mouse-follow spotlight
 - **Scroll-driven animations** — GSAP ScrollTrigger reveals and smooth scrolling (Lenis)
 - **Live chat embed** — actual working chat component on the landing page, not a screenshot
@@ -55,8 +68,8 @@ The landing page (`/`) is a separate, from-scratch design pass built to showcase
 
 ### Try It Now
 Visit **[compass-chat-app.vercel.app](https://compass-chat-app.vercel.app/)** to see all features in action:
-- Landing page: [compass-chat-app.vercel.app](https://compass-chat-app.vercel.app/)
-- Chat app: [compass-chat-app.vercel.app/login](https://compass-chat-app.vercel.app/login) (sign in with any phone + name)
+- **Landing page:** [compass-chat-app.vercel.app](https://compass-chat-app.vercel.app/)
+- **Chat app:** [compass-chat-app.vercel.app/login](https://compass-chat-app.vercel.app/login) (sign in with any phone + name)
 
 ## Tech stack
 
