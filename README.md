@@ -30,6 +30,34 @@ Compass Chat lets a user sign in with just a phone number and name (the API auto
 
 The landing page (`/`) is a separate, from-scratch design pass built to showcase that chat panel — including a live, interactive instance of the real `MessageBubble`/`TypingIndicator` components, not a static screenshot.
 
+## Screenshots & Features
+
+### Desktop Experience
+- **3-pane layout** — chat list on the left, conversation thread in the center, optional details panel on the right
+- **Direct conversations** with online/offline presence indicators and read receipts (✓ sent, ✓✓ read)
+- **Group conversations** with member management and real-time updates
+- **Rich message support** — text with emoji picker, message timestamps, and sender avatars
+- **Auto-scroll** — follows new messages unless you've scrolled up to read history
+- **Real-time delivery** — Socket.io-powered instant message delivery and conversation updates
+
+### Mobile Experience
+- **Single-pane stack navigation** — tap a conversation to open the thread, back button to return to chat list
+- **Touch-optimized composer** — emoji picker, send button, and message input designed for mobile
+- **Responsive UI** — all features work seamlessly on small screens
+- **Quick contact row** — favorite/recent contacts as avatar chips for quick access
+
+### Landing Page
+- **Modern hero section** — dark theme with floating image cards and interactive mouse-follow spotlight
+- **Scroll-driven animations** — GSAP ScrollTrigger reveals and smooth scrolling (Lenis)
+- **Live chat embed** — actual working chat component on the landing page, not a screenshot
+- **Feature showcase** — real-time messaging, presence, and instant delivery explained through storytelling
+- **Fully responsive** — optimized for desktop, tablet, and mobile layouts
+
+### Try It Now
+Visit **[compass-chat-app.vercel.app](https://compass-chat-app.vercel.app/)** to see all features in action:
+- Landing page: [compass-chat-app.vercel.app](https://compass-chat-app.vercel.app/)
+- Chat app: [compass-chat-app.vercel.app/login](https://compass-chat-app.vercel.app/login) (sign in with any phone + name)
+
 ## Tech stack
 
 | Layer | Choice | Why |
