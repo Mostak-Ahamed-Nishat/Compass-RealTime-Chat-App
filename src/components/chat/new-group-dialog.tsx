@@ -120,8 +120,8 @@ const NewGroupDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="overflow-hidden p-0 md:max-w-sm">
-        <DialogHeader className="shrink-0 px-5 pt-5">
+      <DialogContent className="overflow-hidden gap-0 p-0 md:max-w-xl">
+        <DialogHeader className="shrink-0 px-5 pt-4">
           <DialogTitle>New Group</DialogTitle>
         </DialogHeader>
 
@@ -141,7 +141,11 @@ const NewGroupDialog = ({
         </div>
 
         {selectedUsers.length > 0 && (
-          <div className="shrink-0 flex flex-wrap gap-2 px-5 pt-3">
+          // Capped and independently scrollable — otherwise a large
+          // selection grows this area without bound and crowds out the
+          // member list below until it's barely usable (as few as 1-2 rows
+          // visible with 20+ people selected).
+          <div className="shrink-0 flex max-h-24 flex-wrap gap-2 overflow-y-auto px-5 pt-3">
             {selectedUsers.map((user) => (
               <span
                 key={user._id}
@@ -161,7 +165,7 @@ const NewGroupDialog = ({
           </div>
         )}
 
-        <div className="shrink-0 px-5 pb-2 pt-4">
+        <div className="shrink-0 px-5 pb-1.5 pt-3">
           <label className="text-xs font-semibold uppercase tracking-wide text-secondary">
             Add members (min {MIN_ADDITIONAL_MEMBERS})
           </label>
@@ -176,7 +180,7 @@ const NewGroupDialog = ({
           </div>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-2">
+        <div className="min-h-0 flex-1 overflow-y-auto px-2 pt-1">
           {query.trim().length >= 2 && isSearching ? (
             <p className="px-3 py-6 text-center text-sm text-secondary">
               Searching…
@@ -222,7 +226,7 @@ const NewGroupDialog = ({
           )}
         </div>
 
-        <div className="shrink-0 space-y-3 border-t border-gray-100 px-5 py-4">
+        <div className="shrink-0 space-y-2 border-t border-gray-100 px-5 py-3">
           {validationError && (
             <p className="text-sm font-medium text-red-500">
               {validationError}

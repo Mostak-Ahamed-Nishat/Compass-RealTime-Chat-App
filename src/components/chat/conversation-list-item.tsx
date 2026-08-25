@@ -68,8 +68,9 @@ const ConversationListItem = ({
     >
       <ConversationAvatar
         name={name}
-        isOnline={isOnline ?? true}
+        isOnline={isOnline}
         showPresence={conversation.type === 'direct'}
+        isGroup={conversation.type === 'group'}
         className="shrink-0"
       />
 

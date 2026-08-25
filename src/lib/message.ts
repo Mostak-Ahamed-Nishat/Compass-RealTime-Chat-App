@@ -1,5 +1,27 @@
 import type { Message } from '@/types'
 
+// GET /conversations/{id}/messages returns newest-first (it's built around
+// a `before` cursor for loading older history), but the UI renders oldest
+// at the top / newest at the bottom like every chat app — so incoming
+// pages must be flipped to chronological order before they hit state.
+export function sortMessagesChronologically(messages: Message[]): Message[] {
+  return [...messages].sort(
+    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+  )
+}
+
+// Reconciles a freshly-fetched page against what's already in state —
+// used after a socket reconnect / polling fallback, where the incoming
+// page may overlap with messages already delivered live.
+export function mergeMessagesById(
+  existing: Message[],
+  incoming: Message[]
+): Message[] {
+  const byId = new Map(existing.map((m) => [m._id, m]))
+  for (const message of incoming) byId.set(message._id, message)
+  return sortMessagesChronologically(Array.from(byId.values()))
+}
+
 export function formatMessageTime(iso: string): string {
   return new Date(iso).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
 }

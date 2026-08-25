@@ -3,9 +3,13 @@ export interface User {
   name: string
   phone: string
   createdAt?: string
-  // Client-only: presence status. In a real app, would come from Socket.io or presence API.
+  // Client-only presence, derived from real message:new activity only —
+  // see lib/presence.ts for what these are and are not allowed to claim.
   isOnline?: boolean
   lastSeen?: string
+  // Raw epoch-ms twin of lastSeen, used to compare against a specific
+  // message's createdAt (e.g. for the "seen" read receipt approximation).
+  lastActiveAt?: number
 }
 
 export interface Message {

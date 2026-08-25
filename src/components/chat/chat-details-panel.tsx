@@ -35,7 +35,7 @@ import {
 } from '@/components/ui'
 import { cn, slugifyHandle } from '@/lib/utils'
 import { getConversationName } from '@/lib/conversation'
-import { extractLinks } from '@/lib/message'
+import { extractLinks, isImageMessage } from '@/lib/message'
 import { formatRelativeTime } from '@/lib/conversation'
 import { CHAT_THEME_SWATCHES } from '@/lib/theme'
 import { ConversationAvatar } from './conversation-avatar'
@@ -63,6 +63,7 @@ export interface ChatDetailsPanelProps {
   isLeavingGroup?: boolean
   onRenameGroup?: (name: string) => void
   onOpenAddMembers?: () => void
+  onJumpToMessage?: (messageId: string) => void
   className?: string
 }
 
@@ -245,6 +246,7 @@ const ChatDetailsPanel = ({
   isLeavingGroup = false,
   onRenameGroup,
   onOpenAddMembers,
+  onJumpToMessage,
   className,
 }: ChatDetailsPanelProps) => {
   const shouldReduceMotion = useReducedMotion()
@@ -264,6 +266,28 @@ const ChatDetailsPanel = ({
     conversation.type === 'group' ? conversation.name : ''
   )
 
+  // The member list reveals more as it's scrolled toward its bottom rather
+  // than rendering every participant at once — mirrors the sidebar's
+  // People-tab pattern (see sidebar.tsx) for a consistently "loads as you
+  // scroll" feel, even though the full list is already in memory here (no
+  // API pagination on `participants`). Resets whenever the panel is
+  // reopened or switched to a different conversation.
+  const MEMBERS_PAGE_SIZE = 8
+  const [membersVisibleCount, setMembersVisibleCount] = React.useState(
+    MEMBERS_PAGE_SIZE
+  )
+  const [isLoadingMoreMembers, setIsLoadingMoreMembers] = React.useState(false)
+  const membersLoadTriggeredRef = React.useRef(false)
+  const membersLoadTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(
+    null
+  )
+  const resetMembersPaging = () => {
+    setMembersVisibleCount(MEMBERS_PAGE_SIZE)
+    setIsLoadingMoreMembers(false)
+    membersLoadTriggeredRef.current = false
+    if (membersLoadTimeoutRef.current) clearTimeout(membersLoadTimeoutRef.current)
+  }
+
   React.useEffect(() => {
     if (!isOpen) {
       setView('root')
@@ -273,6 +297,7 @@ const ChatDetailsPanel = ({
       setIsEmojiModalOpen(false)
       setIsEditingGroupName(false)
       setConfirmTarget(null)
+      resetMembersPaging()
     }
   }, [isOpen])
 
@@ -283,7 +308,15 @@ const ChatDetailsPanel = ({
     setCustomizeField(null)
     setIsEditingGroupName(false)
     setGroupNameDraft(conversation.type === 'group' ? conversation.name : '')
+    resetMembersPaging()
   }, [conversation._id])
+
+  React.useEffect(
+    () => () => {
+      if (membersLoadTimeoutRef.current) clearTimeout(membersLoadTimeoutRef.current)
+    },
+    []
+  )
 
   React.useEffect(() => {
     setNicknameDraft(nickname ?? '')
@@ -303,6 +336,15 @@ const ChatDetailsPanel = ({
       : `@${slugifyHandle(conversation.name)}`
 
   const links = React.useMemo(() => extractLinks(messages), [messages])
+  const mediaMessages = React.useMemo(
+    () => messages.filter((m) => isImageMessage(m.text)),
+    [messages]
+  )
+
+  const handleJump = (messageId: string) => {
+    onJumpToMessage?.(messageId)
+    onClose()
+  }
 
   const searchResults = React.useMemo(() => {
     const q = searchQuery.trim().toLowerCase()
@@ -343,6 +385,49 @@ const ChatDetailsPanel = ({
 
   const isGroup = conversation.type === 'group'
   const isCurrentUserAdmin = isGroup && conversation.admins.includes(currentUserId)
+  const membersHasMore =
+    isGroup &&
+    conversation.type === 'group' &&
+    conversation.participants.length > membersVisibleCount
+
+  // Same fix as the sidebar's People tab: scroll-to-load-more can only ever
+  // fire once the list actually overflows its box, so a short first page
+  // that doesn't fill the visible area would otherwise get stuck forever.
+  // Top it up immediately whenever there's more to show but nothing to
+  // scroll yet.
+  const membersScrollRef = React.useRef<HTMLDivElement>(null)
+  React.useLayoutEffect(() => {
+    const el = membersScrollRef.current
+    if (!el || !membersHasMore) return
+    if (el.scrollHeight <= el.clientHeight) {
+      setMembersVisibleCount((c) => c + MEMBERS_PAGE_SIZE)
+    }
+    // isOpen/view/isSearching are the actual mount/unmount triggers for this
+    // element — it only exists while the panel is open (AnimatePresence)
+    // AND showing the group root, not-searching view. Without all three
+    // here, opening the panel after membersHasMore had already settled
+    // (the common case — those don't change just from opening/closing)
+    // would never re-check against the now-mounted node.
+  }, [membersHasMore, membersVisibleCount, view, isSearching, isOpen])
+
+  const handleMembersScroll = (event: React.UIEvent<HTMLDivElement>) => {
+    const el = event.currentTarget
+    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight
+    if (
+      distanceFromBottom < 60 &&
+      membersHasMore &&
+      !isLoadingMoreMembers &&
+      !membersLoadTriggeredRef.current
+    ) {
+      membersLoadTriggeredRef.current = true
+      setIsLoadingMoreMembers(true)
+      membersLoadTimeoutRef.current = setTimeout(() => {
+        setMembersVisibleCount((c) => c + MEMBERS_PAGE_SIZE)
+        setIsLoadingMoreMembers(false)
+        membersLoadTriggeredRef.current = false
+      }, 350)
+    }
+  }
 
   const headerTitle =
     view === 'root'
@@ -477,24 +562,26 @@ const ChatDetailsPanel = ({
                         </p>
                       ) : (
                         searchResults.map((m) => (
-                          <div
+                          <button
+                            type="button"
                             key={m._id}
-                            className="rounded-xl px-2 py-2.5 hover:bg-gray-50 dark:hover:bg-white/5"
+                            onClick={() => handleJump(m._id)}
+                            className="block w-full rounded-xl px-2 py-2.5 text-left hover:bg-gray-50 dark:hover:bg-white/5"
                           >
                             <p className="line-clamp-2 text-sm text-gray-900 dark:text-white">
-                              {m.text}
+                              {isImageMessage(m.text) ? '📷 Photo' : m.text}
                             </p>
                             <p className="mt-0.5 text-xs text-secondary">
                               {formatRelativeTime(m.createdAt)}
                             </p>
-                          </div>
+                          </button>
                         ))
                       )}
                     </div>
                   </div>
                 ) : (
-                  <div className="border-t border-gray-100 px-4 py-4 dark:border-white/10">
-                    <div className="flex items-center justify-between pb-2">
+                  <div className="flex min-h-0 flex-1 flex-col border-t border-gray-100 px-4 py-4 dark:border-white/10">
+                    <div className="flex shrink-0 items-center justify-between pb-2">
                       <span className="text-sm font-semibold text-gray-900 dark:text-white">
                         Members ({conversation.participants.length})
                       </span>
@@ -508,51 +595,62 @@ const ChatDetailsPanel = ({
                         </button>
                       )}
                     </div>
-                    <div className="space-y-1">
-                      {conversation.participants.map((p) => {
-                        const isSelf = p._id === currentUserId
-                        const isRemoving = removingParticipantId === p._id
-                        return (
-                          <div
-                            key={p._id}
-                            className="flex items-center gap-3 rounded-xl px-1 py-2"
-                          >
-                            <ConversationAvatar name={p.name} size="sm" />
-                            <span className="flex-1 truncate text-sm text-gray-900 dark:text-white">
-                              {isSelf ? `${p.name} (You)` : p.name}
-                            </span>
-                            {conversation.admins.includes(p._id) && (
-                              <span className="flex items-center gap-1 text-xs font-medium text-primary">
-                                <Shield className="h-3.5 w-3.5" />
-                                Admin
+                    <div
+                      ref={membersScrollRef}
+                      onScroll={handleMembersScroll}
+                      className="min-h-0 flex-1 space-y-1 overflow-y-auto"
+                    >
+                      {conversation.participants
+                        .slice(0, membersVisibleCount)
+                        .map((p) => {
+                          const isSelf = p._id === currentUserId
+                          const isRemoving = removingParticipantId === p._id
+                          return (
+                            <div
+                              key={p._id}
+                              className="flex items-center gap-3 rounded-xl px-1 py-2"
+                            >
+                              <ConversationAvatar name={p.name} size="sm" />
+                              <span className="flex-1 truncate text-sm text-gray-900 dark:text-white">
+                                {isSelf ? `${p.name} (You)` : p.name}
                               </span>
-                            )}
-                            {isCurrentUserAdmin && !isSelf && (
-                              <IconButton
-                                icon={<UserMinus className="h-4 w-4" />}
-                                label={`Remove ${p.name}`}
-                                size="sm"
-                                disabled={isRemoving}
-                                onClick={() =>
-                                  setConfirmTarget({
-                                    type: 'remove',
-                                    userId: p._id,
-                                    userName: p.name,
-                                  })
-                                }
-                                className="text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10"
-                              />
-                            )}
-                          </div>
-                        )
-                      })}
+                              {conversation.admins.includes(p._id) && (
+                                <span className="flex items-center gap-1 text-xs font-medium text-primary">
+                                  <Shield className="h-3.5 w-3.5" />
+                                  Admin
+                                </span>
+                              )}
+                              {isCurrentUserAdmin && !isSelf && (
+                                <IconButton
+                                  icon={<UserMinus className="h-4 w-4" />}
+                                  label={`Remove ${p.name}`}
+                                  size="sm"
+                                  disabled={isRemoving}
+                                  onClick={() =>
+                                    setConfirmTarget({
+                                      type: 'remove',
+                                      userId: p._id,
+                                      userName: p.name,
+                                    })
+                                  }
+                                  className="text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10"
+                                />
+                              )}
+                            </div>
+                          )
+                        })}
+                      {isLoadingMoreMembers && (
+                        <div className="flex items-center justify-center py-3">
+                          <div className="h-5 w-5 animate-spin rounded-full border-2 border-gray-300 border-t-primary dark:border-white/15" />
+                        </div>
+                      )}
                     </div>
 
                     <button
                       type="button"
                       onClick={() => setConfirmTarget({ type: 'leave' })}
                       disabled={isLeavingGroup}
-                      className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 py-2.5 text-sm font-medium text-red-500 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-red-500/30 dark:hover:bg-red-500/10"
+                      className="mt-4 flex w-full shrink-0 items-center justify-center gap-2 rounded-xl border border-red-200 py-2.5 text-sm font-medium text-red-500 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-red-500/30 dark:hover:bg-red-500/10"
                     >
                       <LogOut className="h-4 w-4" />
                       {isLeavingGroup ? 'Leaving…' : 'Leave group'}
@@ -634,17 +732,19 @@ const ChatDetailsPanel = ({
                         </p>
                       ) : (
                         searchResults.map((m) => (
-                          <div
+                          <button
+                            type="button"
                             key={m._id}
-                            className="rounded-xl px-2 py-2.5 hover:bg-gray-50 dark:hover:bg-white/5"
+                            onClick={() => handleJump(m._id)}
+                            className="block w-full rounded-xl px-2 py-2.5 text-left hover:bg-gray-50 dark:hover:bg-white/5"
                           >
                             <p className="line-clamp-2 text-sm text-gray-900 dark:text-white">
-                              {m.text}
+                              {isImageMessage(m.text) ? '📷 Photo' : m.text}
                             </p>
                             <p className="mt-0.5 text-xs text-secondary">
                               {formatRelativeTime(m.createdAt)}
                             </p>
-                          </div>
+                          </button>
                         ))
                       )}
                     </div>
@@ -781,7 +881,7 @@ const ChatDetailsPanel = ({
                         icon={<ImageIcon className="h-4 w-4" />}
                         iconBg="bg-emerald-50 text-emerald-500 dark:bg-emerald-500/10"
                         label="Media"
-                        meta={<Badge>0</Badge>}
+                        meta={<Badge>{mediaMessages.length}</Badge>}
                         onClick={() => setView('media')}
                       />
                       <Row
@@ -839,10 +939,31 @@ const ChatDetailsPanel = ({
             )}
 
             {view === 'media' && (
-              <SubViewEmptyState
-                icon={<ImageIcon className="h-5 w-5" />}
-                message="No photos or videos shared yet"
-              />
+              <>
+                {mediaMessages.length === 0 ? (
+                  <SubViewEmptyState
+                    icon={<ImageIcon className="h-5 w-5" />}
+                    message="No photos or videos shared yet"
+                  />
+                ) : (
+                  <div className="grid grid-cols-3 gap-1 p-2">
+                    {mediaMessages.map((m) => (
+                      <button
+                        key={m._id}
+                        type="button"
+                        onClick={() => handleJump(m._id)}
+                        className="group relative aspect-square overflow-hidden rounded-lg bg-gray-100 dark:bg-white/5"
+                      >
+                        <img
+                          src={m.text}
+                          alt="Shared media"
+                          className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                        />
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </>
             )}
 
             {view === 'files' && (

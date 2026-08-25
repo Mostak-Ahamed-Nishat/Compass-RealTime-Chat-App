@@ -13,6 +13,16 @@ export interface MessageBubbleProps {
   isOwn: boolean
   senderName?: string
   accentColor?: string
+  isHighlighted?: boolean
+  // See ReadReceipt: an approximation from real presence, not a true
+  // read receipt (the API has no "seen" event).
+  isSeen?: boolean
+}
+
+// Shared by MessageList's scrollIntoView (media/search "jump to message")
+// and any other feature that needs to target a specific bubble in the DOM.
+export function messageDomId(messageId: string): string {
+  return `message-${messageId}`
 }
 
 const MessageBubble = ({
@@ -20,6 +30,8 @@ const MessageBubble = ({
   isOwn,
   senderName,
   accentColor,
+  isHighlighted = false,
+  isSeen = false,
 }: MessageBubbleProps) => {
   const shouldReduceMotion = useReducedMotion()
   const isFailed = message.status === 'failed'
@@ -29,12 +41,14 @@ const MessageBubble = ({
 
   return (
     <motion.div
+      id={messageDomId(message._id)}
       initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 6 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.15, ease: 'easeOut' }}
       className={cn(
-        'flex items-end gap-2 px-4 py-1',
-        isOwn ? 'flex-row-reverse' : 'flex-row'
+        'flex items-end gap-2 rounded-2xl px-4 py-1 transition-colors duration-700',
+        isOwn ? 'flex-row-reverse' : 'flex-row',
+        isHighlighted && 'bg-accent/30 dark:bg-accent/20'
       )}
     >
       {!isOwn && <ConversationAvatar name={senderName ?? 'Unknown'} size="sm" />}
@@ -104,7 +118,9 @@ const MessageBubble = ({
                 ? 'Sending…'
                 : formatMessageTime(message.createdAt)}
           </span>
-          {isOwn && !isFailed && <ReadReceipt sending={isSending} />}
+          {isOwn && !isFailed && (
+            <ReadReceipt sending={isSending} seen={isSeen} />
+          )}
         </div>
       </div>
 

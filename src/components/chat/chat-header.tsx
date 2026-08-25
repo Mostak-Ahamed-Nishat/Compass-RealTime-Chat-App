@@ -19,12 +19,19 @@ const ChatHeader = ({
   onBack,
 }: ChatHeaderProps) => {
   const name = nickname || getConversationName(conversation)
-  const isOnline = conversation.type === 'direct' ? (conversation.participant.isOnline ?? true) : undefined
+  // undefined = no real presence signal for this user yet — no claim is
+  // made either way (see lib/presence.ts for why: the API never relays
+  // other accounts' connect/disconnect, only observed message activity).
+  const isOnline =
+    conversation.type === 'direct' ? conversation.participant.isOnline : undefined
   const subtitle =
     conversation.type === 'group'
       ? `${conversation.participants.length} members`
-      : isOnline ? 'Online'
-      : `Last seen ${conversation.participant.lastSeen || 'recently'}`
+      : isOnline === true
+        ? 'Online'
+        : conversation.type === 'direct' && conversation.participant.lastSeen
+          ? `Last seen ${conversation.participant.lastSeen}`
+          : ''
 
   return (
     <header className="flex h-[73px] shrink-0 items-center justify-between border-b border-gray-200 bg-white px-4 dark:border-white/10 dark:bg-[#0b0b12] md:px-6">
@@ -39,22 +46,30 @@ const ChatHeader = ({
             <ArrowLeft className="h-5 w-5" />
           </button>
         )}
-        <ConversationAvatar
-          name={name}
-          isOnline={isOnline ?? true}
-          showPresence={conversation.type === 'direct'}
-        />
-        <div className="min-w-0">
-          <p className="truncate text-sm font-semibold text-gray-900 dark:text-white">{name}</p>
-          {subtitle && (
-            <div className="flex items-center gap-1.5 truncate text-xs text-secondary">
-              {conversation.type === 'direct' && isOnline !== undefined && (
-                <PresenceIndicator isOnline={isOnline} className="h-2 w-2" />
-              )}
-              <span className="truncate">{subtitle}</span>
-            </div>
-          )}
-        </div>
+        <button
+          type="button"
+          onClick={onToggleDetails}
+          aria-label={`Open ${name}'s profile`}
+          className="flex min-w-0 items-center gap-2 rounded-lg px-1 py-1 text-left transition-colors hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary dark:hover:bg-white/10 md:gap-3"
+        >
+          <ConversationAvatar
+            name={name}
+            isOnline={isOnline}
+            showPresence={conversation.type === 'direct'}
+            isGroup={conversation.type === 'group'}
+          />
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold text-gray-900 dark:text-white">{name}</p>
+            {subtitle && (
+              <div className="flex items-center gap-1.5 truncate text-xs text-secondary">
+                {conversation.type === 'direct' && isOnline === true && (
+                  <PresenceIndicator isOnline className="h-2 w-2" />
+                )}
+                <span className="truncate">{subtitle}</span>
+              </div>
+            )}
+          </div>
+        </button>
       </div>
 
       <div className="flex shrink-0 items-center gap-1">
